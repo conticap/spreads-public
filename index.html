@@ -7,169 +7,297 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0f1923; color: #c8d6e5; font-family: "Segoe UI", Tahoma, sans-serif; padding: 24px; }
-  #header { margin-bottom: 18px; }
-  #title { font-size: 1.2em; font-weight: 700; color: #c8d6e5; }
-  #subtitle { font-size: 0.82em; color: #8395a7; margin-top: 4px; }
+  body { background: #0f1923; color: #c8d6e5; font-family: "Segoe UI", Tahoma, sans-serif; padding: 20px; }
+  #header { margin-bottom: 14px; }
+  #title { font-size: 1.15em; font-weight: 700; color: #c8d6e5; }
+  #subtitle { font-size: 0.82em; color: #8395a7; margin-top: 3px; }
   #expiry-banner { display:none; background:#e74c3c; color:#fff; text-align:center; padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; }
-  #chart { width:100%; height:420px; }
-  #stats { display:flex; gap:16px; flex-wrap:wrap; margin-top:16px; }
-  .stat-box { background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:10px 16px; min-width:110px; }
+  #charts { display:flex; gap:6px; align-items:stretch; }
+  #lineChart { flex:1 1 0; min-width:0; height:420px; }
+  #histChart  { flex:0 0 25%; min-width:180px; height:420px; }
+  .stats-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .stat-card { background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:9px 14px; min-width:100px; }
   .stat-label { font-size:0.72em; color:#8395a7; margin-bottom:3px; }
-  .stat-value { font-size:1.05em; font-weight:700; }
-  #footer { margin-top:20px; font-size:0.75em; color:#4a6380; }
-  #error { color:#e74c3c; padding:40px; text-align:center; font-size:1em; }
+  .stat-value { font-size:1.02em; font-weight:700; }
+  .stat-sub   { font-size:0.7em; color:#8395a7; margin-top:2px; }
+  #spreadInterpret { margin-top:10px; background:#0a1520; border:1px solid #2e3f50; border-radius:5px; padding:10px 14px; font-size:0.85em; line-height:1.6; color:#c8d6e5; display:none; }
+  #spreadInterpret .interp-title { font-size:0.72em; text-transform:uppercase; letter-spacing:0.5px; color:#8395a7; margin-bottom:6px; }
+  .signal-steep { color:#2ed573; font-weight:700; }
+  .signal-flat  { color:#e74c3c; font-weight:700; }
+  .signal-neut  { color:#f39c12; font-weight:700; }
+  #footer { margin-top:16px; font-size:0.75em; color:#4a6380; }
+  #error  { color:#e74c3c; padding:40px; text-align:center; font-size:1em; display:none; }
+  #chartTooltip { position:fixed; pointer-events:none; display:none; background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:8px 12px; z-index:100; }
 </style>
 </head>
 <body>
-
 <div id="expiry-banner">This snapshot has expired and is no longer available.</div>
-<div id="header">
-  <div id="title">Loading...</div>
-  <div id="subtitle"></div>
-</div>
-<div id="chart"></div>
-<div id="stats"></div>
+<div id="header"><div id="title">Loading...</div><div id="subtitle"></div></div>
+<div id="charts"><div id="lineChart"></div><div id="histChart"></div></div>
+<div class="stats-grid" id="statsGrid"></div>
+<div id="spreadInterpret"></div>
 <div id="footer"></div>
-<div id="error" style="display:none"></div>
+<div id="error"></div>
+<div id="chartTooltip"></div>
 
 <script>
 const params = new URLSearchParams(location.search);
-const slug = params.get('s');
+const slug   = params.get('s');
 
 if (!slug) {
   document.getElementById('error').style.display = '';
   document.getElementById('error').textContent = 'No spread specified. Add ?s=slug to the URL.';
   document.getElementById('header').style.display = 'none';
 } else {
-  const owner  = 'conticap';
-  const repo   = 'spreads-public';
-  const branch = 'main';
-  const url    = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/data/${slug}.json`;
-
+  const url = `https://raw.githubusercontent.com/conticap/spreads-public/main/data/${slug}.json`;
   fetch(url)
     .then(r => { if (!r.ok) throw new Error(`Snapshot not found (${r.status})`); return r.json(); })
-    .then(data => {
-      // Expiry check
-      if (data.expires_at) {
-        const exp = new Date(data.expires_at);
-        if (Date.now() > exp.getTime()) {
-          document.getElementById('expiry-banner').style.display = '';
-          document.getElementById('header').style.display = 'none';
-          document.getElementById('chart').style.display = 'none';
-          document.getElementById('stats').style.display = 'none';
-          return;
-        }
-        const expStr = exp.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-        document.getElementById('footer').textContent = `Snapshot published ${new Date(data.published_at || data.expires_at).toLocaleDateString()} · expires ${expStr}`;
-      }
-
-      const b1 = data.bond1.name || data.bond1.isin;
-      const b2 = data.bond2.name || data.bond2.isin;
-      document.title = `${b1} vs ${b2}`;
-      document.getElementById('title').textContent = `${b1}  −  ${b2}`;
-      document.getElementById('subtitle').textContent =
-        `Spread · ${data.dates[0]} to ${data.dates[data.dates.length - 1]}`;
-
-      // Scale to bp
-      const spreadBp = data.spread.map(s => +( s * 100).toFixed(2));
-      const maxVal = Math.max(...spreadBp), minVal = Math.min(...spreadBp);
-      const maxIdx = spreadBp.indexOf(maxVal), minIdx = spreadBp.indexOf(minVal);
-
-      const yMin = minVal, yMax = maxVal;
-      const yPad = (yMax - yMin) * 0.08 || 2;
-      const yRange = [yMin - yPad, yMax + yPad];
-
-      // Fill areas
-      const posClip = spreadBp.map(v => v >= 0 ? v : null);
-      const negClip = spreadBp.map(v => v <= 0 ? v : null);
-
-      const traces = [
-        { x: data.dates, y: posClip, type: 'scatter', mode: 'none', fill: 'tozeroy', fillcolor: 'rgba(46,213,115,0.18)', hoverinfo: 'skip', showlegend: false, connectgaps: false },
-        { x: data.dates, y: negClip, type: 'scatter', mode: 'none', fill: 'tozeroy', fillcolor: 'rgba(231,76,60,0.20)', hoverinfo: 'skip', showlegend: false, connectgaps: false },
-        { x: data.dates, y: spreadBp, type: 'scatter', mode: 'lines', line: { color: '#e2e8f0', width: 1.5 }, hoverinfo: 'none', showlegend: false },
-        { x: [data.dates[0], data.dates[data.dates.length-1]], y: [0,0], type: 'scatter', mode: 'lines', line: { color: '#4a6380', width: 1, dash: 'dash' }, showlegend: false, hoverinfo: 'skip' },
-      ];
-
-      // Mean line
-      const shapes = [], annotations = [];
-      if (data.stats && data.stats.mean != null) {
-        const meanBp = +(data.stats.mean * 100).toFixed(2);
-        shapes.push({ type: 'line', xref: 'x', yref: 'y', x0: data.dates[0], x1: data.dates[data.dates.length-1], y0: meanBp, y1: meanBp, line: { color: '#f39c12', width: 1, dash: 'dot' } });
-        annotations.push({ xref: 'paper', yref: 'y', x: 0.01, y: meanBp, text: `Mean ${meanBp.toFixed(1)} bp`, showarrow: false, font: { size: 10, color: '#f39c12' }, xanchor: 'left', yanchor: 'bottom' });
-      }
-      annotations.push({ xref: 'paper', yref: 'paper', x: 0.01, y: 1.01, text: `${b1} − ${b2}`, showarrow: false, font: { size: 12, color: '#c8d6e5' }, xanchor: 'left', yanchor: 'bottom' });
-
-      // Max/min dots
-      let firstMax = true, firstMin = true;
-      spreadBp.forEach((v, i) => {
-        if (v === maxVal) {
-          const r = firstMax ? 8 : 4;
-          shapes.push({ type: 'circle', xref: 'x', yref: 'y', xsizemode: 'pixel', ysizemode: 'pixel', xanchor: data.dates[i], yanchor: v, x0: -r, x1: r, y0: -r, y1: r, fillcolor: '#2ed573', line: { color: '#ffffff', width: firstMax ? 1.5 : 1 }, opacity: 1 });
-          firstMax = false;
-        }
-        if (v === minVal) {
-          const r = firstMin ? 8 : 4;
-          shapes.push({ type: 'circle', xref: 'x', yref: 'y', xsizemode: 'pixel', ysizemode: 'pixel', xanchor: data.dates[i], yanchor: v, x0: -r, x1: r, y0: -r, y1: r, fillcolor: '#e74c3c', line: { color: '#ffffff', width: firstMin ? 1.5 : 1 }, opacity: 1 });
-          firstMin = false;
-        }
-      });
-
-      const layout = {
-        paper_bgcolor: '#0f1923', plot_bgcolor: '#0f1923',
-        font: { color: '#c8d6e5', size: 11 },
-        margin: { l: 55, r: 10, t: 28, b: 40 },
-        showlegend: false,
-        xaxis: { gridcolor: 'rgba(46,63,80,0.5)', tickfont: { size: 10, color: '#8395a7' }, linecolor: '#2e3f50' },
-        yaxis: { gridcolor: 'rgba(46,63,80,0.5)', tickfont: { size: 10, color: '#8395a7' }, title: { text: 'Spread (bp)', font: { size: 11, color: '#8395a7' } }, range: yRange, zeroline: false, linecolor: '#2e3f50' },
-        shapes, annotations, hovermode: 'x',
-      };
-
-      const lineEl = document.getElementById('chart');
-      Plotly.newPlot(lineEl, traces, layout, { responsive: true, displayModeBar: false });
-
-      // Custom tooltip
-      const tt = document.createElement('div');
-      tt.style.cssText = 'position:fixed;pointer-events:none;display:none;background:#1a2a3a;border:1px solid #2e3f50;border-radius:6px;padding:8px 12px;z-index:100;';
-      document.body.appendChild(tt);
-      lineEl.on('plotly_hover', ev => {
-        const pt = ev.points.find(p => p.curveNumber === 2);
-        if (!pt) return;
-        const col = pt.y >= 0 ? '#2ed573' : '#e74c3c';
-        const prefix = pt.y === spreadBp[maxIdx] ? 'Max: ' : pt.y === spreadBp[minIdx] ? 'Min: ' : '';
-        tt.innerHTML = `<div style="color:#8395a7;font-size:11px;margin-bottom:3px">${pt.x}</div><div style="color:${col};font-size:14px;font-weight:600">${prefix}${pt.y >= 0 ? '+' : ''}${pt.y.toFixed(2)} bp</div>`;
-        tt.style.display = 'block';
-      });
-      lineEl.on('plotly_unhover', () => { tt.style.display = 'none'; });
-      document.addEventListener('mousemove', e => { tt.style.left = (e.clientX + 14) + 'px'; tt.style.top = (e.clientY - 10) + 'px'; });
-
-      // Stats
-      if (data.stats) {
-        const s = data.stats;
-        const last = spreadBp[spreadBp.length - 1];
-        const statsEl = document.getElementById('stats');
-        const fmtBp = v => v != null ? (+(v * 100).toFixed(2)) + ' bp' : '—';
-        const fmtZ  = v => v != null ? v.toFixed(2) : '—';
-        [
-          ['Last', `${last >= 0 ? '+' : ''}${last.toFixed(2)} bp`, last >= 0 ? '#2ed573' : '#e74c3c'],
-          ['Max',  fmtBp(s.max),  '#2ed573'],
-          ['Min',  fmtBp(s.min),  '#e74c3c'],
-          ['Mean', fmtBp(s.mean), '#f39c12'],
-          ['Z-score', fmtZ(s.zscore), '#a29bfe'],
-        ].forEach(([label, val, col]) => {
-          const box = document.createElement('div');
-          box.className = 'stat-box';
-          box.innerHTML = `<div class="stat-label">${label}</div><div class="stat-value" style="color:${col}">${val}</div>`;
-          statsEl.appendChild(box);
-        });
-      }
-    })
+    .then(data => render(data))
     .catch(e => {
       document.getElementById('error').style.display = '';
       document.getElementById('error').textContent = e.message;
       document.getElementById('header').style.display = 'none';
-      document.getElementById('chart').style.display = 'none';
     });
+}
+
+function render(data) {
+  /* ── Expiry ─────────────────────────────────────────────────── */
+  if (data.expires_at) {
+    const exp = new Date(data.expires_at);
+    if (Date.now() > exp.getTime()) {
+      document.getElementById('expiry-banner').style.display = '';
+      ['header','charts','statsGrid','spreadInterpret'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+      });
+      return;
+    }
+    const expStr = exp.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+    document.getElementById('footer').textContent =
+      `Snapshot published ${new Date(data.published_at || data.expires_at).toLocaleDateString()} · expires ${expStr}`;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────── */
+  const b1name = data.bond1.name || data.bond1.isin;
+  const b2name = data.bond2.name || data.bond2.isin;
+  document.title = `${b1name} vs ${b2name}`;
+  document.getElementById('title').textContent = `${b1name}  −  ${b2name}`;
+  document.getElementById('subtitle').textContent =
+    `Spread · ${data.dates[0]} to ${data.dates[data.dates.length - 1]}`;
+
+  /* ── Spread values in bp ─────────────────────────────────────── */
+  const spreadBp = data.spread.map(s => +(s * 100).toFixed(2));
+  const maxVal   = Math.max(...spreadBp), minVal = Math.min(...spreadBp);
+  const maxIdx   = spreadBp.indexOf(maxVal), minIdx = spreadBp.indexOf(minVal);
+  const yPad     = (maxVal - minVal) * 0.08 || 2;
+  const yRange   = [minVal - yPad, maxVal + yPad];
+
+  /* ── Zero-crossing interpolation for fill ───────────────────── */
+  function insertZeroCrossings(dates, vals) {
+    const outD = [], outV = [];
+    for (let i = 0; i < vals.length; i++) {
+      if (i > 0 && vals[i-1] != null && vals[i] != null &&
+          ((vals[i-1] > 0 && vals[i] < 0) || (vals[i-1] < 0 && vals[i] > 0))) {
+        const t  = vals[i-1] / (vals[i-1] - vals[i]);
+        const d0 = new Date(dates[i-1]).getTime(), d1 = new Date(dates[i]).getTime();
+        outD.push(new Date(d0 + t * (d1 - d0)).toISOString().slice(0,10));
+        outV.push(0);
+      }
+      outD.push(dates[i]); outV.push(vals[i]);
+    }
+    return { dates: outD, vals: outV };
+  }
+  const { dates: xFull, vals: vFull } = insertZeroCrossings(data.dates, spreadBp);
+  const posClip = vFull.map(v => v >= 0 ? v : null);
+  const negClip = vFull.map(v => v <= 0 ? v : null);
+
+  /* ── Line chart traces ──────────────────────────────────────── */
+  const lineTraces = [
+    { x: xFull, y: posClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(46,213,115,0.18)', hoverinfo:'skip', showlegend:false, connectgaps:false },
+    { x: xFull, y: negClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(231,76,60,0.20)',  hoverinfo:'skip', showlegend:false, connectgaps:false },
+    { x: xFull, y: vFull,   type:'scatter', mode:'lines', line:{ color:'#e2e8f0', width:1.5 }, hoverinfo:'none', showlegend:false },
+    { x: [data.dates[0], data.dates[data.dates.length-1]], y:[0,0], type:'scatter', mode:'lines', line:{ color:'#4a6380', width:1, dash:'dash' }, showlegend:false, hoverinfo:'skip' },
+  ];
+
+  const lineShapes = [], lineAnno = [];
+  lineAnno.push({ xref:'paper', yref:'paper', x:0.01, y:1.01, text:`${b1name} \u2212 ${b2name}`, showarrow:false, font:{ size:12, color:'#c8d6e5' }, xanchor:'left', yanchor:'bottom' });
+
+  if (data.stats && data.stats.mean != null) {
+    const meanBp = +(data.stats.mean * 100).toFixed(2);
+    lineShapes.push({ type:'line', xref:'x', yref:'y', x0:data.dates[0], x1:data.dates[data.dates.length-1], y0:meanBp, y1:meanBp, line:{ color:'#f39c12', width:1, dash:'dot' } });
+    lineAnno.push({ xref:'paper', yref:'y', x:0.01, y:meanBp, text:`Mean ${meanBp.toFixed(1)} bp`, showarrow:false, font:{ size:10, color:'#f39c12' }, xanchor:'left', yanchor:'bottom' });
+  }
+
+  /* ── Max/min dots ───────────────────────────────────────────── */
+  let firstMax = true, firstMin = true;
+  spreadBp.forEach((v, i) => {
+    if (v === maxVal) {
+      const r = firstMax ? 8 : 4;
+      lineShapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#2ed573', line:{ color:'#ffffff', width:firstMax?1.5:1 }, opacity:1 });
+      firstMax = false;
+    }
+    if (v === minVal) {
+      const r = firstMin ? 8 : 4;
+      lineShapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#e74c3c', line:{ color:'#ffffff', width:firstMin?1.5:1 }, opacity:1 });
+      firstMin = false;
+    }
+  });
+
+  const lineLayout = {
+    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923',
+    font:{ color:'#c8d6e5', size:11 },
+    margin:{ l:55, r:10, t:28, b:40 },
+    showlegend:false,
+    xaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{ size:10, color:'#8395a7' }, linecolor:'#2e3f50' },
+    yaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{ size:10, color:'#8395a7' }, title:{ text:'Spread (bp)', font:{ size:11, color:'#8395a7' } }, range:yRange, zeroline:false, linecolor:'#2e3f50' },
+    shapes:lineShapes, annotations:lineAnno, hovermode:'x',
+  };
+
+  const lineEl = document.getElementById('lineChart');
+  Plotly.newPlot(lineEl, lineTraces, lineLayout, { responsive:true, displayModeBar:false });
+
+  /* ── Histogram ──────────────────────────────────────────────── */
+  const n = spreadBp.length;
+  const mean_h  = spreadBp.reduce((a,b) => a+b, 0) / n;
+  const stdev_h = Math.sqrt(spreadBp.reduce((a,v) => a+(v-mean_h)**2, 0)/n) || 0.001;
+  const pad     = (maxVal - minVal) * 0.05 || 0.5;
+  const histLo  = minVal - pad, histHi = maxVal + pad;
+  const nbins   = 25, binSize = (histHi - histLo) / nbins;
+  const histCounts  = Array(nbins).fill(0);
+  for (const v of spreadBp) { const idx = Math.min(Math.floor((v-histLo)/binSize), nbins-1); if (idx>=0) histCounts[idx]++; }
+  const histCenters = Array.from({length:nbins}, (_,k) => +(histLo+(k+0.5)*binSize).toFixed(3));
+  const histEdgeLo  = Array.from({length:nbins}, (_,k) => +(histLo+k*binSize).toFixed(3));
+  const histEdgeHi  = Array.from({length:nbins}, (_,k) => +(histLo+(k+1)*binSize).toFixed(3));
+  const barColors   = histCenters.map(c => c>=0 ? 'rgba(46,213,115,0.60)' : 'rgba(231,76,60,0.60)');
+  const barBorders  = histCenters.map(c => c>=0 ? '#2ed573' : '#e74c3c');
+
+  const maxCount = Math.max(...histCounts) || 1;
+  const curveY   = Array.from({length:80}, (_,k) => histLo+(histHi-histLo)*k/79);
+  const curveX   = curveY.map(y => {
+    const pdf = Math.exp(-0.5*((y-mean_h)/stdev_h)**2)/(stdev_h*Math.sqrt(2*Math.PI));
+    return +(pdf/(1/(stdev_h*Math.sqrt(2*Math.PI)))*maxCount).toFixed(2);
+  });
+
+  const sorted = [...spreadBp].sort((a,b)=>a-b);
+  const q1 = sorted[Math.floor(n*0.25)], med = sorted[Math.floor(n*0.50)], q3 = sorted[Math.floor(n*0.75)];
+
+  const histShapes = [];
+  [[mean_h,'#f39c12','dot'],[q1,'#74b9ff','dash'],[med,'#74b9ff','dash'],[q3,'#74b9ff','dash']].forEach(([y,c,d]) =>
+    histShapes.push({ type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:y, y1:y, line:{ color:c, width:1, dash:d } })
+  );
+
+  const histEl = document.getElementById('histChart');
+  Plotly.newPlot(histEl, [
+    { x:histCounts, y:histCenters, type:'bar', orientation:'h', marker:{ color:barColors, line:{ color:barBorders, width:0.8 } }, showlegend:false, hoverinfo:'none' },
+    { x:curveX, y:curveY, type:'scatter', mode:'lines', line:{ color:'#f39c12', width:1.5 }, showlegend:false, hoverinfo:'skip' },
+  ], {
+    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923',
+    font:{ color:'#c8d6e5', size:11 },
+    margin:{ l:6, r:44, t:30, b:40 },
+    showlegend:false,
+    xaxis:{ title:{ text:'Days', font:{ size:10, color:'#8395a7' } }, gridcolor:'rgba(46,63,80,0.3)', linecolor:'#2e3f50', tickfont:{ size:9, color:'#8395a7' }, rangemode:'tozero' },
+    yaxis:{ range:yRange, gridcolor:'rgba(46,63,80,0.5)', linecolor:'#2e3f50', tickfont:{ size:9, color:'#8395a7' }, zeroline:false, showticklabels:true, side:'right' },
+    shapes:histShapes, bargap:0.04, hovermode:'closest',
+  }, { responsive:true, displayModeBar:false });
+
+  /* ── Shared tooltip ─────────────────────────────────────────── */
+  const tt = document.getElementById('chartTooltip');
+  lineEl.on('plotly_hover', ev => {
+    const pt = ev.points.find(p => p.curveNumber === 2); if (!pt) return;
+    const col    = pt.y >= 0 ? '#2ed573' : '#e74c3c';
+    const prefix = pt.y === spreadBp[maxIdx] ? 'Max: ' : pt.y === spreadBp[minIdx] ? 'Min: ' : '';
+    tt.innerHTML = `<div style="color:#8395a7;font-size:11px;margin-bottom:3px">${pt.x}</div><div style="color:${col};font-size:14px;font-weight:600">${prefix}${pt.y>=0?'+':''}${pt.y.toFixed(2)} bp</div>`;
+    tt.style.display = 'block';
+  });
+  lineEl.on('plotly_unhover', () => { tt.style.display='none'; });
+  histEl.on('plotly_hover', ev => {
+    const pt = ev.points.find(p=>p.curveNumber===0); if (!pt) return;
+    const k = histCenters.indexOf(pt.y); if (k<0) return;
+    tt.innerHTML = `<div style="color:#8395a7;font-size:11px;margin-bottom:2px">Bin ${histEdgeLo[k].toFixed(2)} to ${histEdgeHi[k].toFixed(2)}</div><div style="color:#e2e8f0;font-size:11px">Count: ${histCounts[k]} (${(histCounts[k]/n*100).toFixed(1)}%)</div>`;
+    tt.style.display = 'block';
+  });
+  histEl.on('plotly_unhover', () => { tt.style.display='none'; });
+  document.addEventListener('mousemove', ev => {
+    if (tt.style.display==='none') return;
+    const x = ev.clientX+16, y = ev.clientY-10;
+    tt.style.left = (x+tt.offsetWidth>window.innerWidth ? ev.clientX-tt.offsetWidth-8 : x)+'px';
+    tt.style.top  = (y+tt.offsetHeight>window.innerHeight ? ev.clientY-tt.offsetHeight-8 : y)+'px';
+  }, { passive:true });
+
+  lineEl.on('plotly_relayout', ev => {
+    const u={};
+    if (ev['yaxis.range[0]']!==undefined) u['yaxis.range[0]']=ev['yaxis.range[0]'];
+    if (ev['yaxis.range[1]']!==undefined) u['yaxis.range[1]']=ev['yaxis.range[1]'];
+    if (Object.keys(u).length) Plotly.relayout(histEl, u);
+  });
+
+  /* ── Stats grid ─────────────────────────────────────────────── */
+  const s = data.stats;
+  if (s && s.last != null) {
+    const bp = v => (v*100).toFixed(2);
+    const cards = [
+      { label:'Last',            value:bp(s.last)+' bp' },
+      { label:'Mean',            value:bp(s.mean)+' bp' },
+      { label:'Off Avg',         value:bp(s.off_avg)+' bp' },
+      { label:'Median',          value:bp(s.median)+' bp' },
+      { label:'StDev',           value:bp(s.stdev)+' bp' },
+      { label:'StDev from Mean', value:s.stdev_from_mean.toFixed(2) },
+      { label:'Percentile',      value:s.percentile.toFixed(1)+'%' },
+      { label:'High',            value:bp(s.high)+' bp', sub:s.high_date },
+      { label:'Low',             value:bp(s.low)+' bp',  sub:s.low_date  },
+    ];
+    document.getElementById('statsGrid').innerHTML = cards.map(c =>
+      `<div class="stat-card"><div class="stat-label">${c.label}</div><div class="stat-value">${c.value}</div>${c.sub?`<div class="stat-sub">${c.sub}</div>`:''}</div>`
+    ).join('');
+    renderInterpretation(s);
+  }
+}
+
+function renderInterpretation(s) {
+  const el = document.getElementById('spreadInterpret');
+  if (!s || s.last==null) { el.style.display='none'; return; }
+  const last=+(s.last*100).toFixed(2), mean=+(s.mean*100).toFixed(2), median=+(s.median*100).toFixed(2);
+  const stdev=+(s.stdev*100).toFixed(2), offAvg=+(s.off_avg*100).toFixed(2), pct=+s.percentile.toFixed(1), sig=+s.stdev_from_mean.toFixed(2);
+  const high=+(s.high*100).toFixed(2), low=+(s.low*100).toFixed(2), range=+(high-low).toFixed(2);
+  const skew = median>mean?'negative':median<mean?'positive':'symmetric';
+
+  let pctLabel,pctSignal,pctView;
+  if (pct>=90){pctLabel='extremely wide';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread has been this wide or wider only ${(100-pct).toFixed(1)}% of the time. Historically this is a strong mean-reversion signal.`;}
+  else if(pct>=75){pctLabel='wide';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread is in the upper quartile. There is a historical bias toward reversion.`;}
+  else if(pct>=55){pctLabel='slightly rich to average';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread is modestly above average with limited directional conviction from positioning alone.`;}
+  else if(pct>=45){pctLabel='close to average';pctSignal='neut';pctView=`At the <b>${pct}th percentile</b>, the spread is near its historical centre. No strong mean-reversion bias from current level.`;}
+  else if(pct>=25){pctLabel='slightly cheap to average';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread is in the lower half. Modest historical bias toward steepening.`;}
+  else if(pct>=10){pctLabel='narrow';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread is in the bottom quartile, suggesting a steepening bias based on history.`;}
+  else{pctLabel='extremely narrow';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread has been this tight or tighter only ${pct.toFixed(1)}% of the time — a strong historical steepening signal.`;}
+
+  const absSig=Math.abs(sig);
+  let sigText;
+  if(absSig>=2.0)     sigText=`The spread is <b>${sig>0?'+':''}${sig}σ</b> from its mean — an extreme deviation. Reversion moves of this magnitude historically unwind sharply.`;
+  else if(absSig>=1.5)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is significantly stretched. Reversion pressure is elevated.`;
+  else if(absSig>=1.0)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is notably off average. Mean reversion is the base case.`;
+  else if(absSig>=0.5)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is modestly off average. Directional bias exists but is not compelling on its own.`;
+  else                sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is close to its mean. No significant sigma-based signal.`;
+
+  const abOff=Math.abs(offAvg), offDir=offAvg>0?'above':'below';
+  const offPct=Math.abs(mean)>0.01?(abOff/Math.abs(mean)*100).toFixed(1):'—';
+  const offText=`The spread is <b>${abOff} bp ${offDir} its mean</b> (${offPct}% of mean).`;
+
+  let skewText;
+  if(skew==='negative') skewText=`The distribution is <b>negatively skewed</b> (median ${median} bp &gt; mean ${mean} bp): most observations cluster above the mean, with a downside tail.`;
+  else if(skew==='positive') skewText=`The distribution is <b>positively skewed</b> (mean ${mean} bp &gt; median ${median} bp): a tail of higher readings pulls the average up.`;
+  else skewText=`The distribution is approximately <b>symmetric</b> — mean and median are virtually equal (${mean} bp).`;
+
+  const ord=n=>{const s=Math.abs(n)%100;if(s>=11&&s<=13)return 'th';switch(s%10){case 1:return 'st';case 2:return 'nd';case 3:return 'rd';default:return 'th';}};
+  const rangePct=range>0?+((last-low)/range*100).toFixed(0):50;
+  const rangeText=`Within the period range of <b>${low} to ${high} bp</b> (width: ${range} bp), the spread is at the ${rangePct}${ord(rangePct)} percentile of that range.`;
+
+  const targetMean=mean.toFixed(2), targetMed=median.toFixed(2);
+  let curveText;
+  if(pctSignal==='flat') curveText=`Mean reversion implies <span class="signal-flat">FLATTENING</span>. Near-term target: <b>${targetMed} bp</b> (median), fuller reversion to <b>${targetMean} bp</b> (mean).`;
+  else if(pctSignal==='steep') curveText=`Mean reversion implies <span class="signal-steep">STEEPENING</span>. Near-term target: <b>${targetMed} bp</b> (median), fuller reversion to <b>${targetMean} bp</b> (mean).`;
+  else curveText=`No strong directional bias from mean reversion. The spread is near its historical centre.`;
+
+  el.style.display='block';
+  el.innerHTML=`<div class="interp-title">Spread Interpretation</div><p>${pctView} ${offText} ${sigText}</p><p>${skewText}</p><p>${rangeText}</p><p>${curveText}</p>`;
 }
 </script>
 </body>
