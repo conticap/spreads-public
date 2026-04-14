@@ -9,47 +9,258 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0f1923; color: #c8d6e5; font-family: "Segoe UI", Tahoma, sans-serif; padding: 20px; }
   #header { margin-bottom: 14px; }
-  #title { font-size: 1.15em; font-weight: 700; color: #c8d6e5; }
+  #title  { font-size: 1.15em; font-weight: 700; color: #c8d6e5; }
   #subtitle { font-size: 0.82em; color: #8395a7; margin-top: 3px; }
   #expiry-banner { display:none; background:#e74c3c; color:#fff; text-align:center; padding:12px; border-radius:6px; margin-bottom:16px; font-weight:700; }
+
   #charts { display:flex; gap:6px; align-items:stretch; }
   #lineChart { flex:1 1 0; min-width:0; height:420px; }
   #histChart  { flex:0 0 25%; min-width:180px; height:420px; }
+
   .stats-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
   .stat-card { background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:9px 14px; min-width:100px; }
   .stat-label { font-size:0.72em; color:#8395a7; margin-bottom:3px; }
   .stat-value { font-size:1.02em; font-weight:700; }
   .stat-sub   { font-size:0.7em; color:#8395a7; margin-top:2px; }
+
   #spreadInterpret { margin-top:10px; background:#0a1520; border:1px solid #2e3f50; border-radius:5px; padding:10px 14px; font-size:0.85em; line-height:1.6; color:#c8d6e5; display:none; }
   #spreadInterpret .interp-title { font-size:0.72em; text-transform:uppercase; letter-spacing:0.5px; color:#8395a7; margin-bottom:6px; }
   .signal-steep { color:#2ed573; font-weight:700; }
   .signal-flat  { color:#e74c3c; font-weight:700; }
   .signal-neut  { color:#f39c12; font-weight:700; }
+
+  /* ── DV01 Calculator ── */
+  #calcPanel { margin-top:18px; background:#1a2733; border:1px solid #2e3f50; border-radius:6px; padding:14px; }
+  #calcPanel h3 { margin:0 0 10px; font-size:0.92em; color:#e2e8f0; letter-spacing:0.3px; }
+  .dv01-table { width:100%; border-collapse:collapse; font-size:0.82em; }
+  .dv01-table th { text-align:left; color:#8395a7; font-size:0.78em; text-transform:uppercase; letter-spacing:0.4px; padding:5px 6px; border-bottom:1px solid #2e3f50; white-space:nowrap; }
+  .dv01-table td { padding:5px 6px; border-bottom:1px solid #1f3042; vertical-align:middle; }
+  .dv01-table input[type="number"] { background:#0f1923; border:1px solid #2e3f50; color:#e2e8f0; padding:3px 6px; border-radius:3px 0 0 3px; width:72px; font-size:0.92em; text-align:right; font-family:inherit; -moz-appearance:textfield; }
+  .dv01-table input[type="number"]::-webkit-inner-spin-button,
+  .dv01-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  .num-wrap { display:inline-flex; align-items:stretch; }
+  .num-wrap input[type="number"] { border-right:none; }
+  .steppers { display:flex; flex-direction:column; }
+  .steppers button { background:#1a2a3a; border:1px solid #2e3f50; color:#8395a7; font-size:9px; padding:0 4px; cursor:pointer; line-height:1; height:50%; width:18px; display:flex; align-items:center; justify-content:center; }
+  .steppers button:first-child { border-radius:0 3px 0 0; border-bottom:none; }
+  .steppers button:last-child  { border-radius:0 0 3px 0; }
+  .steppers button:hover { background:#2e3f50; color:#e2e8f0; }
+  .dv01-table input.editable { background:#0f1923; border:1px solid #2e3f50; color:#e2e8f0; padding:3px 6px; border-radius:3px; width:96px; font-size:0.92em; text-align:right; font-family:inherit; }
+  .dv01-inp { background:#090f17; border:1px solid #2e4a5c; color:#feca57; padding:3px 6px; border-radius:3px; width:108px; font-size:0.92em; text-align:right; font-family:inherit; }
+  .dv01-inp:focus { border-color:#feca57; outline:none; }
+  .dv01-table input[type="date"]   { background:#0f1923; border:1px solid #2e3f50; color:#e2e8f0; padding:3px 6px; border-radius:3px; width:118px; font-size:0.92em; font-family:inherit; }
+  .dv01-table input[readonly]      { background:#090f17; border-color:#1a2e40; color:#feca57; cursor:default; }
+  .dv01-table input:focus          { border-color:#54a0ff; outline:none; }
+  .bond-name-cell { color:#2ed573; font-weight:600; max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bond-name-cell.b2 { color:#54a0ff; }
+  #calcFooter { display:flex; align-items:center; gap:16px; margin-top:8px; font-size:0.82em; }
+  #spreadBpLabel { color:#8395a7; }
+  #dv01MatchLabel { color:#2ed573; }
+  #calcRefHint { color:#4a6380; font-size:0.76em; margin-top:6px; }
+
+  /* period bar */
+  #periodBar { display:none; align-items:center; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .pbtn { background:#1a2a3a; border:1px solid #2e3f50; color:#8395a7; border-radius:4px; padding:4px 10px; font-size:0.8em; cursor:pointer; font-family:inherit; }
+  .pbtn:hover { border-color:#54a0ff; color:#e2e8f0; }
+  .pbtn.active { background:#1a3a5c; border-color:#54a0ff; color:#e2e8f0; font-weight:600; }
+  .pbtn-sep { width:1px; height:18px; background:#2e3f50; margin:0 4px; }
+  .pdate { background:#0f1923; border:1px solid #2e3f50; color:#c8d6e5; padding:3px 6px; border-radius:4px; font-size:0.8em; font-family:inherit; }
+  #periodBar label { font-size:0.78em; color:#8395a7; }
+  #pgoBtnWrap button { background:#2ed573; border:none; color:#0f1923; padding:4px 12px; border-radius:4px; font-size:0.8em; font-weight:700; cursor:pointer; font-family:inherit; }
   #footer { margin-top:16px; font-size:0.75em; color:#4a6380; }
   #error  { color:#e74c3c; padding:40px; text-align:center; font-size:1em; display:none; }
-  #chartTooltip { position:fixed; pointer-events:none; display:none; background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:8px 12px; z-index:100; }
+  #chartTooltip { position:fixed; pointer-events:none; display:none; background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:8px 12px; z-index:100; font-size:0.82em; }
 </style>
 </head>
 <body>
-<div id="expiry-banner">This snapshot has expired and is no longer available.</div>
-<div id="header"><div id="title">Loading...</div><div id="subtitle"></div></div>
+<div id="expiry-banner">This snapshot has expired.</div>
+<div id="header"><div id="title">Loading…</div><div id="subtitle"></div></div>
+<div id="periodBar">
+  <button class="pbtn" data-p="1M">1M</button>
+  <button class="pbtn" data-p="3M">3M</button>
+  <button class="pbtn" data-p="6M">6M</button>
+  <button class="pbtn" data-p="YTD">YTD</button>
+  <button class="pbtn" data-p="1Y">1Y</button>
+  <button class="pbtn active" data-p="5Y">5Y</button>
+  <div class="pbtn-sep"></div>
+  <label>From</label><input class="pdate" type="date" id="pfrom" />
+  <label>To</label><input class="pdate" type="date" id="pto" />
+  <span id="pgoBtnWrap"><button onclick="applyCustomRange()">Go</button></span>
+</div>
 <div id="charts"><div id="lineChart"></div><div id="histChart"></div></div>
 <div class="stats-grid" id="statsGrid"></div>
 <div id="spreadInterpret"></div>
+
+<div id="calcPanel" style="display:none">
+  <h3>DV01 Calculator</h3>
+  <table class="dv01-table">
+    <thead><tr>
+      <th>Bond</th>
+      <th>Yield&nbsp;(%)</th>
+      <th>Clean&nbsp;Price</th>
+      <th>Notional&nbsp;(000s)</th>
+      <th>DV01&nbsp;(RON)</th>
+      <th>DV01&nbsp;(USD)</th>
+      <th>Settlement</th>
+    </tr></thead>
+    <tbody id="calcRows"></tbody>
+  </table>
+  <div id="calcFooter">
+    <span id="spreadBpLabel"></span>
+    <span id="dv01MatchLabel"></span>
+  </div>
+</div>
+
 <div id="footer"></div>
 <div id="error"></div>
 <div id="chartTooltip"></div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   DEMO / TEST PAYLOAD
+   Open this file directly in a browser (file://) or add ?s=demo to use it.
+
+   Reference values (cross-check against bond_pricing.py):
+     Apr-29  coupon 6.30%  maturity 2029-04-25  settle 2026-04-11
+       yield 6.85%  →  clean price  98.5282
+       DV01 per 1 000 face  =  0.2636 RON
+     Jul-33  coupon 7.50%  maturity 2033-07-27  settle 2026-04-11
+       yield 7.20%  →  clean price 101.6030
+       DV01 per 1 000 face  =  0.5591 RON
+     DV01-match: Jul-33 @ 10 000K  ↔  Apr-29 @ 21 210K  → DV01 ≈ 5 591 RON each
+   ═══════════════════════════════════════════════════════════════════════════ */
+const DEMO_DATA = {"slug":"apr29-jul33-ytd","period":"YTD","bond1":{"isin":"ROJVM8ELBDU4","name":"Apr-29","maturity_date":"2029-04-25","coupon":6.3,"type":"ROMGB","currency":"RON","quote_type":"yield"},"bond2":{"isin":"ROPG9LZUB0O2","name":"Jul-33","maturity_date":"2033-07-27","coupon":7.5,"type":"ROMGB","currency":"RON","quote_type":"yield"},"fx_rates":{"RON":4.55,"EUR":0.92,"USD":1.0},"dates":["2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-19","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-26","2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-09","2026-02-10","2026-02-11","2026-02-12","2026-02-13","2026-02-16","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24","2026-02-25","2026-02-26","2026-02-27","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-03","2026-04-06","2026-04-07","2026-04-08","2026-04-09"],"spread":[0.3388,0.337,0.3423,0.3576,0.3657,0.3631,0.3771,0.3818,0.3841,0.386,0.3855,0.3896,0.3859,0.3771,0.3635,0.3523,0.3565,0.3711,0.3754,0.3821,0.397,0.3967,0.4099,0.429,0.4474,0.4518,0.4586,0.4596,0.4604,0.4407,0.4346,0.4078,0.3747,0.3628,0.3482,0.35,0.3485,0.3327,0.3396,0.332,0.3367,0.341,0.3496,0.3627,0.3708,0.3731,0.3747,0.3708,0.3543,0.3366,0.3202,0.3108,0.2931,0.2973,0.2722,0.2512,0.2518,0.2595,0.2609,0.269,0.2844,0.2882,0.2851,0.2943,0.3157,0.3135,0.3243,0.3329,0.3326],"stats":{"last":0.3326,"mean":0.3548,"median":0.3565,"stdev":0.0514,"off_avg":-0.0222,"stdev_from_mean":-0.4324,"percentile":26.09,"high":0.4604,"high_date":"2026-02-12","low":0.2512,"low_date":"2026-03-23"},"last_yields":[6.85,7.2],"last_prices":[98.5282,101.603],"last_settle":["2026-04-11","2026-04-11"],"published_at":"2026-04-09T10:00:00Z","expires_at":"2030-01-01T00:00:00Z"};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOND MATH  (mirrors bond_pricing.py exactly)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function daysBetween(a, b) {
+  // a, b are Date objects; returns integer day count (b - a)
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+
+function _lastCouponOnOrBefore(matDate, settleDate) {
+  // Same month/day as matDate, the most recent year ≤ settleDate
+  const m = matDate.getMonth(), d = matDate.getDate();
+  let yr = settleDate.getFullYear();
+  let cpn = new Date(yr, m, d);
+  if (cpn > settleDate) { yr--; cpn = new Date(yr, m, d); }
+  return cpn;
+}
+
+function _nextCouponDates(matDate, lastCpn) {
+  // All coupon dates strictly after lastCpn up to and including matDate
+  const m = matDate.getMonth(), d = matDate.getDate();
+  const result = [];
+  let yr = lastCpn.getFullYear() + 1;
+  while (true) {
+    const cpn = new Date(yr, m, d);
+    if (cpn > matDate) break;
+    result.push(cpn);
+    yr++;
+  }
+  // Ensure matDate is included (handles rounding)
+  if (!result.length || result[result.length - 1].getTime() !== matDate.getTime()) {
+    result.push(new Date(matDate.getTime()));
+  }
+  return result;
+}
+
+function dirtyPrice(coupon, yieldPct, matDate, settleDate) {
+  const dtm = daysBetween(settleDate, matDate);
+  if (dtm <= 0) return 100 + coupon;
+  const y = yieldPct / 100;
+  const lastCpn = _lastCouponOnOrBefore(matDate, settleDate);
+
+  if (dtm < 365) {
+    // Short bond — simple interest, ACT/period denominator
+    const daysInPeriod = daysBetween(lastCpn, matDate);
+    return (100 + coupon) / (1 + y * dtm / daysInPeriod);
+  }
+
+  // Long bond — ACT/ACT annual compounding
+  const remaining = _nextCouponDates(matDate, lastCpn);
+  const nextCpn = remaining[0];
+  const daysInPeriod = daysBetween(lastCpn, nextCpn);
+  const w = daysBetween(settleDate, nextCpn) / daysInPeriod;
+  const n = remaining.length;
+  let dp = 0;
+  for (let i = 0; i < n; i++) {
+    const cf = (i < n - 1) ? coupon : coupon + 100;
+    dp += cf / Math.pow(1 + y, w + i);
+  }
+  return dp;
+}
+
+function cleanPrice(coupon, yieldPct, matDate, settleDate) {
+  const dtm = daysBetween(settleDate, matDate);
+  const lastCpn = _lastCouponOnOrBefore(matDate, settleDate);
+  let daysInPeriod;
+  if (dtm < 365) {
+    daysInPeriod = daysBetween(lastCpn, matDate);
+  } else {
+    const nextCpn = _nextCouponDates(matDate, lastCpn)[0];
+    daysInPeriod = daysBetween(lastCpn, nextCpn);
+  }
+  const daysSinceLast = daysBetween(lastCpn, settleDate);
+  const accrued = daysInPeriod > 0 ? coupon * daysSinceLast / daysInPeriod : 0;
+  return dirtyPrice(coupon, yieldPct, matDate, settleDate) - accrued;
+}
+
+function calcDV01(coupon, yieldPct, matDate, settleDate, notionalK) {
+  // Central difference: (price(y−1bp) − price(y+1bp)) / 2, scaled to notional
+  const pDn = dirtyPrice(coupon, yieldPct - 0.01, matDate, settleDate);
+  const pUp = dirtyPrice(coupon, yieldPct + 0.01, matDate, settleDate);
+  return (pDn - pUp) / 2 * (notionalK * 1000) / 100;
+}
+
+// Newton-Raphson: compute yield from clean price
+function yieldFromCleanPrice(coupon, targetPx, matDate, settleDate) {
+  let y = coupon / 100; // starting guess
+  for (let i = 0; i < 60; i++) {
+    const px   = cleanPrice(coupon, y * 100, matDate, settleDate);
+    const pxUp = cleanPrice(coupon, (y + 0.00005) * 100, matDate, settleDate);
+    const pxDn = cleanPrice(coupon, (y - 0.00005) * 100, matDate, settleDate);
+    const dpdy = (pxUp - pxDn) / 0.0001;
+    if (Math.abs(dpdy) < 1e-12) break;
+    const delta = (px - targetPx) / dpdy;
+    y -= delta;
+    if (Math.abs(delta) < 1e-9) break;
+  }
+  return y * 100;
+}
+
+// T+2 settlement (weekdays only — no holiday calendar)
+function defaultSettlement() {
+  let d = new Date();
+  let added = 0;
+  while (added < 2) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE BOOT
+   ═══════════════════════════════════════════════════════════════════════════ */
+let _bonds = [];
+
 const params = new URLSearchParams(location.search);
 const slug   = params.get('s');
+const isDemo = !slug || slug === 'demo' || location.protocol === 'file:';
 
-if (!slug) {
-  document.getElementById('error').style.display = '';
-  document.getElementById('error').textContent = 'No spread specified. Add ?s=slug to the URL.';
-  document.getElementById('header').style.display = 'none';
+if (isDemo) {
+  render(DEMO_DATA);
 } else {
-  const url = `https://raw.githubusercontent.com/conticap/spreads-public/main/data/${slug}.json`;
+  const url = `https://raw.githubusercontent.com/conticap/spreads-public/main/data/${encodeURIComponent(slug)}.json`;
   fetch(url)
     .then(r => { if (!r.ok) throw new Error(`Snapshot not found (${r.status})`); return r.json(); })
     .then(data => render(data))
@@ -60,244 +271,531 @@ if (!slug) {
     });
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER
+   ═══════════════════════════════════════════════════════════════════════════ */
 function render(data) {
-  /* ── Expiry ─────────────────────────────────────────────────── */
+  // Expiry check
   if (data.expires_at) {
-    const exp = new Date(data.expires_at);
-    if (Date.now() > exp.getTime()) {
+    if (Date.now() > new Date(data.expires_at).getTime()) {
       document.getElementById('expiry-banner').style.display = '';
-      ['header','charts','statsGrid','spreadInterpret'].forEach(id => {
-        const el = document.getElementById(id); if (el) el.style.display = 'none';
+      ['header','charts','statsGrid','spreadInterpret','calcPanel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
       });
       return;
     }
-    const expStr = exp.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  const expStr = data.expires_at
+    ? new Date(data.expires_at).toLocaleString([], { dateStyle:'medium', timeStyle:'short' })
+    : '';
+  if (expStr) {
     document.getElementById('footer').textContent =
-      `Snapshot published ${new Date(data.published_at || data.expires_at).toLocaleDateString()} · expires ${expStr}`;
+      `Published ${new Date(data.published_at || data.expires_at).toLocaleDateString()} · expires ${expStr}`;
   }
 
-  /* ── Header ─────────────────────────────────────────────────── */
-  const b1name = data.bond1.name || data.bond1.isin;
-  const b2name = data.bond2.name || data.bond2.isin;
-  document.title = `${b1name} vs ${b2name}`;
-  document.getElementById('title').textContent = `${b1name}  −  ${b2name}`;
+  _bonds = [data.bond1, data.bond2];
+  _fxRates = data.fx_rates || {};
+  _allData = data;
+
+  // Header
+  const b1n = data.bond1.name || data.bond1.isin;
+  const b2n = data.bond2.name || data.bond2.isin;
+  document.title = `${b1n} vs ${b2n}`;
+  document.getElementById('title').textContent = `${b1n}  −  ${b2n}`;
+
+  // Period bar
+  const pb = document.getElementById('periodBar');
+  pb.style.display = 'flex';
+  pb.querySelectorAll('.pbtn[data-p]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pb.querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _activePeriod = btn.dataset.p;
+      applyPeriod(_activePeriod);
+    });
+  });
+
+  // Set date inputs to full range
+  document.getElementById('pfrom').value = data.dates[0];
+  document.getElementById('pto').value   = data.dates[data.dates.length - 1];
+
+  buildCalc(data);
+  applyPeriod('5Y');
+}
+
+/* ─── Period filtering ───────────────────────────────────────────── */
+function applyPeriod(period) {
+  if (!_allData) return;
+  const allDates = _allData.dates;
+  const last = allDates[allDates.length - 1];
+  const lastD = new Date(last);
+  let fromD;
+  if (period === '5Y')  fromD = new Date(lastD.getFullYear()-5, lastD.getMonth(), lastD.getDate());
+  else if (period === '1Y')  fromD = new Date(lastD.getFullYear()-1, lastD.getMonth(), lastD.getDate());
+  else if (period === '6M')  fromD = new Date(lastD.getFullYear(), lastD.getMonth()-6, lastD.getDate());
+  else if (period === '3M')  fromD = new Date(lastD.getFullYear(), lastD.getMonth()-3, lastD.getDate());
+  else if (period === '1M')  fromD = new Date(lastD.getFullYear(), lastD.getMonth()-1, lastD.getDate());
+  else if (period === 'YTD') fromD = new Date(lastD.getFullYear(), 0, 1);
+  else fromD = new Date(allDates[0]);
+  const fromStr = fromD.toISOString().slice(0, 10);
+  document.getElementById('pfrom').value = fromStr;
+  document.getElementById('pto').value   = last;
+  renderPeriod(fromStr, last);
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('pfrom').value;
+  const to   = document.getElementById('pto').value;
+  if (!from || !to) return;
+  document.getElementById('periodBar').querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
+  renderPeriod(from, to);
+}
+
+function recomputeStats(dates, spreadBp) {
+  const n = spreadBp.length;
+  if (!n) return null;
+  const last  = spreadBp[n - 1];
+  const mean  = spreadBp.reduce((a, b) => a + b, 0) / n;
+  const sorted = [...spreadBp].sort((a, b) => a - b);
+  const median = sorted[Math.floor(n / 2)];
+  const stdev  = Math.sqrt(spreadBp.reduce((a, v) => a + (v - mean) ** 2, 0) / n) || 0;
+  const hi = Math.max(...spreadBp), lo = Math.min(...spreadBp);
+  const hiIdx = spreadBp.indexOf(hi), loIdx = spreadBp.indexOf(lo);
+  const below = spreadBp.filter(v => v < last).length;
+  return {
+    last:   +(last/100).toFixed(4),  mean: +(mean/100).toFixed(4),  median: +(median/100).toFixed(4),
+    stdev:  +(stdev/100).toFixed(4),  off_avg: +((last - mean)/100).toFixed(4),
+    stdev_from_mean: stdev > 0 ? +((last - mean) / stdev).toFixed(4) : 0,
+    percentile: +(below / n * 100).toFixed(2),
+    high: +(hi/100).toFixed(4), high_date: dates[hiIdx],
+    low:  +(lo/100).toFixed(4), low_date:  dates[loIdx],
+    // Pass already-in-bp values for chart use
+    _last_bp: last, _mean_bp: mean, _hi_bp: hi, _lo_bp: lo,
+  };
+}
+
+function renderPeriod(fromStr, toStr) {
+  if (!_allData) return;
+  const idxFrom = _allData.dates.findIndex(d => d >= fromStr);
+  const idxTo   = _allData.dates.reduce((acc, d, i) => d <= toStr ? i : acc, -1);
+  if (idxFrom < 0 || idxTo < 0 || idxFrom > idxTo) return;
+
+  const dates   = _allData.dates.slice(idxFrom, idxTo + 1);
+  const spread  = _allData.spread.slice(idxFrom, idxTo + 1);
+  const spreadBp = spread.map(s => +(s * 100).toFixed(2));
+
+  const b1n = _allData.bond1.name || _allData.bond1.isin;
+  const b2n = _allData.bond2.name || _allData.bond2.isin;
+
   document.getElementById('subtitle').textContent =
-    `Spread · ${data.dates[0]} to ${data.dates[data.dates.length - 1]}`;
+    `${_allData.bond1.type || ''} Spread · ${dates[0]} to ${dates[dates.length - 1]}`;
 
-  /* ── Spread values in bp ─────────────────────────────────────── */
-  const spreadBp = data.spread.map(s => +(s * 100).toFixed(2));
-  const maxVal   = Math.max(...spreadBp), minVal = Math.min(...spreadBp);
-  const maxIdx   = spreadBp.indexOf(maxVal), minIdx = spreadBp.indexOf(minVal);
-  const yPad     = (maxVal - minVal) * 0.08 || 2;
-  const yRange   = [minVal - yPad, maxVal + yPad];
+  const maxVal = Math.max(...spreadBp), minVal = Math.min(...spreadBp);
+  const maxIdx = spreadBp.indexOf(maxVal), minIdx = spreadBp.indexOf(minVal);
+  const yPad   = (maxVal - minVal) * 0.08 || 2;
+  const yRange  = [minVal - yPad, maxVal + yPad];
+  const slicedData = { ..._allData, dates, spread };
 
-  /* ── Zero-crossing interpolation for fill ───────────────────── */
-  function insertZeroCrossings(dates, vals) {
-    const outD = [], outV = [];
-    for (let i = 0; i < vals.length; i++) {
-      if (i > 0 && vals[i-1] != null && vals[i] != null &&
-          ((vals[i-1] > 0 && vals[i] < 0) || (vals[i-1] < 0 && vals[i] > 0))) {
-        const t  = vals[i-1] / (vals[i-1] - vals[i]);
-        const d0 = new Date(dates[i-1]).getTime(), d1 = new Date(dates[i]).getTime();
-        outD.push(new Date(d0 + t * (d1 - d0)).toISOString().slice(0,10));
-        outV.push(0);
-      }
-      outD.push(dates[i]); outV.push(vals[i]);
+  renderLineChart(slicedData, spreadBp, maxVal, minVal, maxIdx, minIdx, yRange, b1n, b2n);
+  renderHistChart(slicedData, spreadBp, yRange);
+
+  // Recompute stats from visible window
+  const stats = recomputeStats(dates, spreadBp);
+  renderStats(stats);
+  renderInterpretation(stats);
+}
+
+/* ─── Line chart ─────────────────────────────────────────────────── */
+function insertZeroCrossings(dates, vals) {
+  const outD = [], outV = [];
+  for (let i = 0; i < vals.length; i++) {
+    if (i > 0 && vals[i-1] != null && vals[i] != null &&
+        ((vals[i-1] > 0 && vals[i] < 0) || (vals[i-1] < 0 && vals[i] > 0))) {
+      const t  = vals[i-1] / (vals[i-1] - vals[i]);
+      const d0 = new Date(dates[i-1]).getTime();
+      const d1 = new Date(dates[i]).getTime();
+      outD.push(new Date(d0 + t * (d1 - d0)).toISOString().slice(0, 10));
+      outV.push(0);
     }
-    return { dates: outD, vals: outV };
+    outD.push(dates[i]); outV.push(vals[i]);
   }
+  return { dates: outD, vals: outV };
+}
+
+function renderLineChart(data, spreadBp, maxVal, minVal, maxIdx, minIdx, yRange, b1n, b2n) {
   const { dates: xFull, vals: vFull } = insertZeroCrossings(data.dates, spreadBp);
   const posClip = vFull.map(v => v >= 0 ? v : null);
   const negClip = vFull.map(v => v <= 0 ? v : null);
 
-  /* ── Line chart traces ──────────────────────────────────────── */
-  const lineTraces = [
-    { x: xFull, y: posClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(46,213,115,0.18)', hoverinfo:'skip', showlegend:false, connectgaps:false },
-    { x: xFull, y: negClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(231,76,60,0.20)',  hoverinfo:'skip', showlegend:false, connectgaps:false },
-    { x: xFull, y: vFull,   type:'scatter', mode:'lines', line:{ color:'#e2e8f0', width:1.5 }, hoverinfo:'none', showlegend:false },
-    { x: [data.dates[0], data.dates[data.dates.length-1]], y:[0,0], type:'scatter', mode:'lines', line:{ color:'#4a6380', width:1, dash:'dash' }, showlegend:false, hoverinfo:'skip' },
+  const traces = [
+    { x:xFull, y:posClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(46,213,115,0.18)', hoverinfo:'skip', showlegend:false, connectgaps:false },
+    { x:xFull, y:negClip, type:'scatter', mode:'none', fill:'tozeroy', fillcolor:'rgba(231,76,60,0.20)',  hoverinfo:'skip', showlegend:false, connectgaps:false },
+    { x:xFull, y:vFull,   type:'scatter', mode:'lines', line:{color:'#e2e8f0',width:1.5}, hoverinfo:'none', showlegend:false },
+    { x:[data.dates[0], data.dates[data.dates.length-1]], y:[0,0], type:'scatter', mode:'lines', line:{color:'#4a6380',width:1,dash:'dash'}, showlegend:false, hoverinfo:'skip' },
   ];
 
-  const lineShapes = [], lineAnno = [];
-  lineAnno.push({ xref:'paper', yref:'paper', x:0.01, y:1.01, text:`${b1name} \u2212 ${b2name}`, showarrow:false, font:{ size:12, color:'#c8d6e5' }, xanchor:'left', yanchor:'bottom' });
-
+  const shapes = [], annotations = [];
+  annotations.push({ xref:'paper', yref:'paper', x:0.01, y:1.02, text:`${b1n} − ${b2n}`, showarrow:false, font:{size:12,color:'#c8d6e5'}, xanchor:'left', yanchor:'bottom' });
   if (data.stats && data.stats.mean != null) {
-    const meanBp = +(data.stats.mean * 100).toFixed(2);
-    lineShapes.push({ type:'line', xref:'x', yref:'y', x0:data.dates[0], x1:data.dates[data.dates.length-1], y0:meanBp, y1:meanBp, line:{ color:'#f39c12', width:1, dash:'dot' } });
-    lineAnno.push({ xref:'paper', yref:'y', x:0.01, y:meanBp, text:`Mean ${meanBp.toFixed(1)} bp`, showarrow:false, font:{ size:10, color:'#f39c12' }, xanchor:'left', yanchor:'bottom' });
+    const mBp = +(data.stats.mean * 100).toFixed(2);
+    shapes.push({ type:'line', xref:'x', yref:'y', x0:data.dates[0], x1:data.dates[data.dates.length-1], y0:mBp, y1:mBp, line:{color:'#f39c12',width:1,dash:'dot'} });
+    annotations.push({ xref:'paper', yref:'y', x:0.01, y:mBp, text:`Mean ${mBp.toFixed(1)}`, showarrow:false, font:{size:10,color:'#f39c12'}, xanchor:'left', yanchor:'bottom' });
   }
 
-  /* ── Max/min dots ───────────────────────────────────────────── */
   let firstMax = true, firstMin = true;
   spreadBp.forEach((v, i) => {
     if (v === maxVal) {
-      const r = firstMax ? 8 : 4;
-      lineShapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#2ed573', line:{ color:'#ffffff', width:firstMax?1.5:1 }, opacity:1 });
-      firstMax = false;
+      const r = firstMax ? 8 : 4; firstMax = false;
+      shapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#2ed573', line:{color:'#fff',width:r===8?1.5:1} });
     }
     if (v === minVal) {
-      const r = firstMin ? 8 : 4;
-      lineShapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#e74c3c', line:{ color:'#ffffff', width:firstMin?1.5:1 }, opacity:1 });
-      firstMin = false;
+      const r = firstMin ? 8 : 4; firstMin = false;
+      shapes.push({ type:'circle', xref:'x', yref:'y', xsizemode:'pixel', ysizemode:'pixel', xanchor:data.dates[i], yanchor:v, x0:-r, x1:r, y0:-r, y1:r, fillcolor:'#e74c3c', line:{color:'#fff',width:r===8?1.5:1} });
     }
   });
 
-  const lineLayout = {
-    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923',
-    font:{ color:'#c8d6e5', size:11 },
-    margin:{ l:55, r:10, t:28, b:40 },
-    showlegend:false,
-    xaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{ size:10, color:'#8395a7' }, linecolor:'#2e3f50' },
-    yaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{ size:10, color:'#8395a7' }, title:{ text:'Spread (bp)', font:{ size:11, color:'#8395a7' } }, range:yRange, zeroline:false, linecolor:'#2e3f50' },
-    shapes:lineShapes, annotations:lineAnno, hovermode:'x',
-  };
-
   const lineEl = document.getElementById('lineChart');
-  Plotly.newPlot(lineEl, lineTraces, lineLayout, { responsive:true, displayModeBar:false });
+  Plotly.newPlot(lineEl, traces, {
+    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923', font:{color:'#c8d6e5',size:11},
+    margin:{l:55,r:10,t:28,b:40}, showlegend:false,
+    xaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{size:10,color:'#8395a7'}, linecolor:'#2e3f50' },
+    yaxis:{ gridcolor:'rgba(46,63,80,0.5)', tickfont:{size:10,color:'#8395a7'}, title:{text:'Spread (bp)',font:{size:11,color:'#8395a7'}}, range:yRange, zeroline:false, linecolor:'#2e3f50' },
+    shapes, annotations, hovermode:'x',
+  }, { responsive:true, displayModeBar:false });
 
-  /* ── Histogram ──────────────────────────────────────────────── */
-  const n = spreadBp.length;
-  const mean_h  = spreadBp.reduce((a,b) => a+b, 0) / n;
-  const stdev_h = Math.sqrt(spreadBp.reduce((a,v) => a+(v-mean_h)**2, 0)/n) || 0.001;
-  const pad     = (maxVal - minVal) * 0.05 || 0.5;
-  const histLo  = minVal - pad, histHi = maxVal + pad;
-  const nbins   = 25, binSize = (histHi - histLo) / nbins;
-  const histCounts  = Array(nbins).fill(0);
-  for (const v of spreadBp) { const idx = Math.min(Math.floor((v-histLo)/binSize), nbins-1); if (idx>=0) histCounts[idx]++; }
-  const histCenters = Array.from({length:nbins}, (_,k) => +(histLo+(k+0.5)*binSize).toFixed(3));
-  const histEdgeLo  = Array.from({length:nbins}, (_,k) => +(histLo+k*binSize).toFixed(3));
-  const histEdgeHi  = Array.from({length:nbins}, (_,k) => +(histLo+(k+1)*binSize).toFixed(3));
-  const barColors   = histCenters.map(c => c>=0 ? 'rgba(46,213,115,0.60)' : 'rgba(231,76,60,0.60)');
-  const barBorders  = histCenters.map(c => c>=0 ? '#2ed573' : '#e74c3c');
-
-  const maxCount = Math.max(...histCounts) || 1;
-  const curveY   = Array.from({length:80}, (_,k) => histLo+(histHi-histLo)*k/79);
-  const curveX   = curveY.map(y => {
-    const pdf = Math.exp(-0.5*((y-mean_h)/stdev_h)**2)/(stdev_h*Math.sqrt(2*Math.PI));
-    return +(pdf/(1/(stdev_h*Math.sqrt(2*Math.PI)))*maxCount).toFixed(2);
+  // Sync histogram Y-axis on line chart zoom
+  lineEl.on('plotly_relayout', ev => {
+    const u = {};
+    if (ev['yaxis.range[0]'] !== undefined) u['yaxis.range[0]'] = ev['yaxis.range[0]'];
+    if (ev['yaxis.range[1]'] !== undefined) u['yaxis.range[1]'] = ev['yaxis.range[1]'];
+    if (Object.keys(u).length) Plotly.relayout(document.getElementById('histChart'), u);
   });
 
-  const sorted = [...spreadBp].sort((a,b)=>a-b);
-  const q1 = sorted[Math.floor(n*0.25)], med = sorted[Math.floor(n*0.50)], q3 = sorted[Math.floor(n*0.75)];
+  // Hover tooltip (shared)
+  const tt = document.getElementById('chartTooltip');
+  lineEl.on('plotly_hover', ev => {
+    const pt = ev.points.find(p => p.curveNumber === 2); if (!pt) return;
+    const col = pt.y >= 0 ? '#2ed573' : '#e74c3c';
+    const prefix = pt.y === spreadBp[maxIdx] ? 'Max: ' : pt.y === spreadBp[minIdx] ? 'Min: ' : '';
+    tt.innerHTML = `<div style="color:#8395a7;margin-bottom:3px">${pt.x}</div><div style="color:${col};font-size:14px;font-weight:600">${prefix}${pt.y >= 0 ? '+' : ''}${pt.y.toFixed(2)} bp</div>`;
+    tt.style.display = 'block';
+  });
+  lineEl.on('plotly_unhover', () => { tt.style.display = 'none'; });
 
-  const histShapes = [];
-  [[mean_h,'#f39c12','dot'],[q1,'#74b9ff','dash'],[med,'#74b9ff','dash'],[q3,'#74b9ff','dash']].forEach(([y,c,d]) =>
-    histShapes.push({ type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:y, y1:y, line:{ color:c, width:1, dash:d } })
+  document.addEventListener('mousemove', ev => {
+    if (tt.style.display === 'none') return;
+    const x = ev.clientX + 16, y = ev.clientY - 10;
+    tt.style.left = (x + tt.offsetWidth > window.innerWidth ? ev.clientX - tt.offsetWidth - 8 : x) + 'px';
+    tt.style.top  = (y + tt.offsetHeight > window.innerHeight ? ev.clientY - tt.offsetHeight - 8 : y) + 'px';
+  }, { passive: true });
+}
+
+/* ─── Histogram ──────────────────────────────────────────────────── */
+function renderHistChart(data, spreadBp, yRange) {
+  const n  = spreadBp.length;
+  const mn = spreadBp.reduce((a, b) => a + b, 0) / n;
+  const sd = Math.sqrt(spreadBp.reduce((a, v) => a + (v - mn) ** 2, 0) / n) || 0.001;
+  const lo = Math.min(...spreadBp), hi = Math.max(...spreadBp);
+  const pad = (hi - lo) * 0.05 || 0.5;
+  const hLo = lo - pad, hHi = hi + pad;
+  const BINS = 25, bSz = (hHi - hLo) / BINS;
+  const counts = Array(BINS).fill(0);
+  for (const v of spreadBp) { const k = Math.min(Math.floor((v - hLo) / bSz), BINS - 1); if (k >= 0) counts[k]++; }
+  const centers = Array.from({ length:BINS }, (_, k) => +(hLo + (k + 0.5) * bSz).toFixed(3));
+  const edgeLo  = Array.from({ length:BINS }, (_, k) => +(hLo + k * bSz).toFixed(3));
+  const edgeHi  = Array.from({ length:BINS }, (_, k) => +(hLo + (k + 1) * bSz).toFixed(3));
+  const colors  = centers.map(c => c >= 0 ? 'rgba(46,213,115,0.60)' : 'rgba(231,76,60,0.60)');
+  const borders = centers.map(c => c >= 0 ? '#2ed573' : '#e74c3c');
+  const maxCnt  = Math.max(...counts) || 1;
+  const curveY  = Array.from({ length:80 }, (_, k) => hLo + (hHi - hLo) * k / 79);
+  const curveX  = curveY.map(y => {
+    const pdf = Math.exp(-0.5 * ((y - mn) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+    return +(pdf / (1 / (sd * Math.sqrt(2 * Math.PI))) * maxCnt).toFixed(2);
+  });
+
+  const sorted = [...spreadBp].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(n * 0.25)], med = sorted[Math.floor(n * 0.50)], q3 = sorted[Math.floor(n * 0.75)];
+  const hShapes = [];
+  [[mn,'#f39c12','dot'],[q1,'#74b9ff','dash'],[med,'#74b9ff','dash'],[q3,'#74b9ff','dash']].forEach(([y,c,d]) =>
+    hShapes.push({ type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:y, y1:y, line:{color:c,width:1,dash:d} })
   );
 
   const histEl = document.getElementById('histChart');
   Plotly.newPlot(histEl, [
-    { x:histCounts, y:histCenters, type:'bar', orientation:'h', marker:{ color:barColors, line:{ color:barBorders, width:0.8 } }, showlegend:false, hoverinfo:'none' },
-    { x:curveX, y:curveY, type:'scatter', mode:'lines', line:{ color:'#f39c12', width:1.5 }, showlegend:false, hoverinfo:'skip' },
+    { x:counts, y:centers, type:'bar', orientation:'h', marker:{color:colors,line:{color:borders,width:0.8}}, showlegend:false, hoverinfo:'none' },
+    { x:curveX, y:curveY,  type:'scatter', mode:'lines', line:{color:'#f39c12',width:1.5}, showlegend:false, hoverinfo:'skip' },
   ], {
-    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923',
-    font:{ color:'#c8d6e5', size:11 },
-    margin:{ l:6, r:44, t:30, b:40 },
-    showlegend:false,
-    xaxis:{ title:{ text:'Days', font:{ size:10, color:'#8395a7' } }, gridcolor:'rgba(46,63,80,0.3)', linecolor:'#2e3f50', tickfont:{ size:9, color:'#8395a7' }, rangemode:'tozero' },
-    yaxis:{ range:yRange, gridcolor:'rgba(46,63,80,0.5)', linecolor:'#2e3f50', tickfont:{ size:9, color:'#8395a7' }, zeroline:false, showticklabels:true, side:'right' },
-    shapes:histShapes, bargap:0.04, hovermode:'closest',
+    paper_bgcolor:'#0f1923', plot_bgcolor:'#0f1923', font:{color:'#c8d6e5',size:11},
+    margin:{l:6,r:44,t:30,b:40}, showlegend:false,
+    xaxis:{ title:{text:'Days',font:{size:10,color:'#8395a7'}}, gridcolor:'rgba(46,63,80,0.3)', linecolor:'#2e3f50', tickfont:{size:9,color:'#8395a7'}, rangemode:'tozero' },
+    yaxis:{ range:yRange, gridcolor:'rgba(46,63,80,0.5)', linecolor:'#2e3f50', tickfont:{size:9,color:'#8395a7'}, zeroline:false, side:'right' },
+    shapes:hShapes, bargap:0.04, hovermode:'closest',
   }, { responsive:true, displayModeBar:false });
 
-  /* ── Shared tooltip ─────────────────────────────────────────── */
   const tt = document.getElementById('chartTooltip');
-  lineEl.on('plotly_hover', ev => {
-    const pt = ev.points.find(p => p.curveNumber === 2); if (!pt) return;
-    const col    = pt.y >= 0 ? '#2ed573' : '#e74c3c';
-    const prefix = pt.y === spreadBp[maxIdx] ? 'Max: ' : pt.y === spreadBp[minIdx] ? 'Min: ' : '';
-    tt.innerHTML = `<div style="color:#8395a7;font-size:11px;margin-bottom:3px">${pt.x}</div><div style="color:${col};font-size:14px;font-weight:600">${prefix}${pt.y>=0?'+':''}${pt.y.toFixed(2)} bp</div>`;
-    tt.style.display = 'block';
-  });
-  lineEl.on('plotly_unhover', () => { tt.style.display='none'; });
   histEl.on('plotly_hover', ev => {
-    const pt = ev.points.find(p=>p.curveNumber===0); if (!pt) return;
-    const k = histCenters.indexOf(pt.y); if (k<0) return;
-    tt.innerHTML = `<div style="color:#8395a7;font-size:11px;margin-bottom:2px">Bin ${histEdgeLo[k].toFixed(2)} to ${histEdgeHi[k].toFixed(2)}</div><div style="color:#e2e8f0;font-size:11px">Count: ${histCounts[k]} (${(histCounts[k]/n*100).toFixed(1)}%)</div>`;
+    const pt = ev.points.find(p => p.curveNumber === 0); if (!pt) return;
+    const k = centers.indexOf(pt.y); if (k < 0) return;
+    tt.innerHTML = `<div style="color:#8395a7;margin-bottom:2px">${edgeLo[k].toFixed(2)} – ${edgeHi[k].toFixed(2)} bp</div><div>Count: ${counts[k]} (${(counts[k]/n*100).toFixed(1)}%)</div>`;
     tt.style.display = 'block';
   });
-  histEl.on('plotly_unhover', () => { tt.style.display='none'; });
-  document.addEventListener('mousemove', ev => {
-    if (tt.style.display==='none') return;
-    const x = ev.clientX+16, y = ev.clientY-10;
-    tt.style.left = (x+tt.offsetWidth>window.innerWidth ? ev.clientX-tt.offsetWidth-8 : x)+'px';
-    tt.style.top  = (y+tt.offsetHeight>window.innerHeight ? ev.clientY-tt.offsetHeight-8 : y)+'px';
-  }, { passive:true });
+  histEl.on('plotly_unhover', () => { tt.style.display = 'none'; });
+}
 
-  lineEl.on('plotly_relayout', ev => {
-    const u={};
-    if (ev['yaxis.range[0]']!==undefined) u['yaxis.range[0]']=ev['yaxis.range[0]'];
-    if (ev['yaxis.range[1]']!==undefined) u['yaxis.range[1]']=ev['yaxis.range[1]'];
-    if (Object.keys(u).length) Plotly.relayout(histEl, u);
-  });
+/* ─── Stats grid ─────────────────────────────────────────────────── */
+function renderStats(s) {
+  if (!s || s.last == null) return;
+  const bp = v => (v * 100).toFixed(2);
+  const cards = [
+    { label:'Last',             value: bp(s.last) + ' bp' },
+    { label:'Mean',             value: bp(s.mean) + ' bp' },
+    { label:'Off Average',      value: bp(s.off_avg) + ' bp' },
+    { label:'Median',           value: bp(s.median) + ' bp' },
+    { label:'StDev',            value: bp(s.stdev) + ' bp' },
+    { label:'StDevs from Mean', value: s.stdev_from_mean.toFixed(2) },
+    { label:'Percentile',       value: s.percentile.toFixed(1) + '%' },
+    { label:'High',             value: bp(s.high) + ' bp', sub: s.high_date },
+    { label:'Low',              value: bp(s.low)  + ' bp', sub: s.low_date  },
+  ];
+  document.getElementById('statsGrid').innerHTML = cards.map(c =>
+    `<div class="stat-card"><div class="stat-label">${c.label}</div><div class="stat-value">${c.value}</div>${c.sub ? `<div class="stat-sub">${c.sub}</div>` : ''}</div>`
+  ).join('');
+}
 
-  /* ── Stats grid ─────────────────────────────────────────────── */
-  const s = data.stats;
-  if (s && s.last != null) {
-    const bp = v => (v*100).toFixed(2);
-    const cards = [
-      { label:'Last',            value:bp(s.last)+' bp' },
-      { label:'Mean',            value:bp(s.mean)+' bp' },
-      { label:'Off Avg',         value:bp(s.off_avg)+' bp' },
-      { label:'Median',          value:bp(s.median)+' bp' },
-      { label:'StDev',           value:bp(s.stdev)+' bp' },
-      { label:'StDev from Mean', value:s.stdev_from_mean.toFixed(2) },
-      { label:'Percentile',      value:s.percentile.toFixed(1)+'%' },
-      { label:'High',            value:bp(s.high)+' bp', sub:s.high_date },
-      { label:'Low',             value:bp(s.low)+' bp',  sub:s.low_date  },
-    ];
-    document.getElementById('statsGrid').innerHTML = cards.map(c =>
-      `<div class="stat-card"><div class="stat-label">${c.label}</div><div class="stat-value">${c.value}</div>${c.sub?`<div class="stat-sub">${c.sub}</div>`:''}</div>`
-    ).join('');
-    renderInterpretation(s);
+/* ─── Spread interpretation ──────────────────────────────────────── */
+function renderInterpretation(s) {
+  const el = document.getElementById('spreadInterpret');
+  if (!s || s.last == null) { el.style.display = 'none'; return; }
+
+  const last = +(s.last * 100).toFixed(2), mean = +(s.mean * 100).toFixed(2);
+  const median = +(s.median * 100).toFixed(2), offAvg = +(s.off_avg * 100).toFixed(2);
+  const pct = +s.percentile.toFixed(1), sig = +s.stdev_from_mean.toFixed(2);
+  const high = +(s.high * 100).toFixed(2), low = +(s.low * 100).toFixed(2);
+
+  let pctSignal, pctView;
+  if      (pct >= 90) { pctSignal='flat';  pctView=`At the <b>${pct}th percentile</b>, the spread is in the extreme upper tail — strong historical mean-reversion (flattening) bias.`; }
+  else if (pct >= 75) { pctSignal='flat';  pctView=`At the <b>${pct}th percentile</b>, the spread is in the upper quartile with a bias toward reversion.`; }
+  else if (pct >= 55) { pctSignal='flat';  pctView=`At the <b>${pct}th percentile</b>, the spread is modestly above average.`; }
+  else if (pct >= 45) { pctSignal='neut';  pctView=`At the <b>${pct}th percentile</b>, the spread is near its historical centre — no strong directional bias.`; }
+  else if (pct >= 25) { pctSignal='steep'; pctView=`At the <b>${pct}th percentile</b>, the spread is in the lower half with a modest steepening bias.`; }
+  else if (pct >= 10) { pctSignal='steep'; pctView=`At the <b>${pct}th percentile</b>, the spread is in the bottom quartile — above-average steepening tendency.`; }
+  else                { pctSignal='steep'; pctView=`At the <b>${pct}th percentile</b>, the spread is near its historical trough — strong steepening signal.`; }
+
+  const absSig = Math.abs(sig);
+  let sigTxt;
+  if      (absSig >= 2.0) sigTxt = `<b>${sig > 0 ? '+' : ''}${sig}σ</b> — an extreme deviation; mean reversion is the strong base case.`;
+  else if (absSig >= 1.5) sigTxt = `<b>${sig > 0 ? '+' : ''}${sig}σ</b> — a significant stretch.`;
+  else if (absSig >= 1.0) sigTxt = `<b>${sig > 0 ? '+' : ''}${sig}σ</b> — notably off average.`;
+  else if (absSig >= 0.5) sigTxt = `<b>${sig > 0 ? '+' : ''}${sig}σ</b> — modestly off average.`;
+  else                    sigTxt = `<b>${sig > 0 ? '+' : ''}${sig}σ</b> — close to its mean.`;
+
+  const offPct  = Math.abs(mean) > 0.01 ? (Math.abs(offAvg) / Math.abs(mean) * 100).toFixed(1) : '—';
+  const range   = +(high - low).toFixed(2);
+  const rangePct = range > 0 ? +((last - low) / range * 100).toFixed(0) : 50;
+  const ord = n => { const s = Math.abs(n) % 100; if (s >= 11 && s <= 13) return 'th'; return ['th','st','nd','rd'][s % 10] || 'th'; };
+
+  const curveText = pctSignal === 'flat'
+    ? `Mean reversion implies <span class="signal-flat">FLATTENING</span>. Targets: median <b>${median} bp</b>, mean <b>${mean} bp</b>.`
+    : pctSignal === 'steep'
+    ? `Mean reversion implies <span class="signal-steep">STEEPENING</span>. Targets: median <b>${median} bp</b>, mean <b>${mean} bp</b>.`
+    : `No strong directional bias — spread is near its historical centre (<b>${mean} bp</b>).`;
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="interp-title">Spread Interpretation</div>
+    <p>${pctView} The spread is <b>${Math.abs(offAvg)} bp ${offAvg >= 0 ? 'above' : 'below'} the mean</b> (${offPct}% of mean). The spread is ${sigTxt}</p>
+    <p>Range over period: <b>${low} – ${high} bp</b> (width ${range} bp); current level is at the ${rangePct}${ord(rangePct)} percentile of that range.</p>
+    <p>${curveText}</p>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DV01 CALCULATOR
+   ═══════════════════════════════════════════════════════════════════════════ */
+const BOND_COLORS = ['#2ed573', '#54a0ff'];
+
+function buildCalc(data) {
+  document.getElementById('calcPanel').style.display = 'block';
+  const defSettle = defaultSettlement();
+
+  document.getElementById('calcRows').innerHTML = _bonds.map((b, i) => {
+    const initY = (data.last_yields && data.last_yields[i] != null) ? data.last_yields[i] : '';
+    const initP = (data.last_prices && data.last_prices[i] != null) ? data.last_prices[i] : '';
+    const initS = (data.last_settle && data.last_settle[i])         ? data.last_settle[i]  : defSettle;
+    const defNot = i === 1 ? 10000 : '';   // default 10 000K on leg 2; leg 1 auto-matched
+    const nameCell = `<td class="bond-name-cell ${i === 1 ? 'b2' : ''}" title="${esc(b.name||b.isin)}">${esc(b.name||b.isin)}</td>`;
+    return `<tr>
+      ${nameCell}
+      <td><span class="num-wrap"><input type="number" step="0.01" id="cy_${i}" value="${initY}" placeholder="6.85" oninput="onField(${i},'yield')" /><span class="steppers"><button tabindex="-1" onclick="stepField('cy_${i}',0.01,'yield',${i})">▲</button><button tabindex="-1" onclick="stepField('cy_${i}',-0.01,'yield',${i})">▼</button></span></span></td>
+      <td><span class="num-wrap"><input type="number" step="0.0001" id="cp_${i}" value="${initP}" placeholder="clean px" oninput="onField(${i},'price')" /><span class="steppers"><button tabindex="-1" onclick="stepField('cp_${i}',0.01,'price',${i})">▲</button><button tabindex="-1" onclick="stepField('cp_${i}',-0.01,'price',${i})">▼</button></span></span></td>
+      <td><input type="text" class="editable" id="cn_${i}" value="${defNot ? fmtNot(defNot) : ''}" placeholder="000s" oninput="onField(${i},'notional')" onblur="fmtField(this,'not')" /></td>
+      <td><input type="text" class="dv01-inp" id="cd_${i}" placeholder="—" oninput="onField(${i},'dv01Ron')" onblur="fmtField(this,'num')" /></td>
+      <td><input type="text" class="dv01-inp" id="cu_${i}" placeholder="—" oninput="onField(${i},'dv01Usd')" onblur="fmtField(this,'num')" /></td>
+      <td><input type="date" id="cs_${i}" value="${initS}" oninput="onField(${i},'settle')" /></td>
+    </tr>`;
+  }).join('');
+
+  setTimeout(() => onField(1, 'notional'), 60);  // initial render
+}
+
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtNum(v) { return Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).replace(/,/g, ' '); }
+function fmtNot(v) { const r = Math.round(v / 5) * 5; return r.toLocaleString('en-US').replace(/,/g, ' '); }
+function parseNum(s) { return parseFloat(String(s || '').replace(/[,   ]/g, '')); }
+function gel(id) { return document.getElementById(id); }
+function setVal(id, v) { const el = gel(id); if (el) el.value = v; }  // does NOT fire oninput
+function fmtField(el, type) { const n = parseNum(el.value); if (!isNaN(n) && n > 0) el.value = type === 'not' ? fmtNot(n) : fmtNum(n); }
+function stepField(id, delta, field, leg) {
+  const el = gel(id); if (!el) return;
+  const v = parseFloat(el.value) || 0;
+  el.value = (v + delta).toFixed(field === 'price' ? 4 : 2);
+  onField(leg, field);
+}
+
+let _busy = false;
+let _calcTimer = null;
+
+function onField(leg, field) {
+  if (_busy) return;
+  clearTimeout(_calcTimer);
+  _calcTimer = setTimeout(() => doRecalc(leg, field), 120);
+}
+
+function doRecalc(anchor, field) {
+  if (_busy) return;
+  _busy = true;
+  try {
+    _doRecalcInner(anchor, field);
+  } finally {
+    _busy = false;
   }
 }
 
-function renderInterpretation(s) {
-  const el = document.getElementById('spreadInterpret');
-  if (!s || s.last==null) { el.style.display='none'; return; }
-  const last=+(s.last*100).toFixed(2), mean=+(s.mean*100).toFixed(2), median=+(s.median*100).toFixed(2);
-  const stdev=+(s.stdev*100).toFixed(2), offAvg=+(s.off_avg*100).toFixed(2), pct=+s.percentile.toFixed(1), sig=+s.stdev_from_mean.toFixed(2);
-  const high=+(s.high*100).toFixed(2), low=+(s.low*100).toFixed(2), range=+(high-low).toFixed(2);
-  const skew = median>mean?'negative':median<mean?'positive':'symmetric';
+function _doRecalcInner(anchor, field) {
+  const other = 1 - anchor;
+  const b  = _bonds[anchor];
+  const bo = _bonds[other];
+  const mat  = parseDate(b.maturity_date);
+  const mato = parseDate(bo.maturity_date);
+  const settle  = parseDate((gel(`cs_${anchor}`) || {}).value)  || parseDate(defaultSettlement());
+  const settleo = parseDate((gel(`cs_${other}`)  || {}).value)  || parseDate(defaultSettlement());
+  const ccy  = b.currency  || 'RON';
+  const ccyo = bo.currency || 'RON';
+  const fx  = _fxRates[ccy]  || _fxRates['RON'] || 4.55;
+  const fxo = _fxRates[ccyo] || _fxRates['RON'] || 4.55;
 
-  let pctLabel,pctSignal,pctView;
-  if (pct>=90){pctLabel='extremely wide';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread has been this wide or wider only ${(100-pct).toFixed(1)}% of the time. Historically this is a strong mean-reversion signal.`;}
-  else if(pct>=75){pctLabel='wide';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread is in the upper quartile. There is a historical bias toward reversion.`;}
-  else if(pct>=55){pctLabel='slightly rich to average';pctSignal='flat';pctView=`At the <b>${pct}th percentile</b>, the spread is modestly above average with limited directional conviction from positioning alone.`;}
-  else if(pct>=45){pctLabel='close to average';pctSignal='neut';pctView=`At the <b>${pct}th percentile</b>, the spread is near its historical centre. No strong mean-reversion bias from current level.`;}
-  else if(pct>=25){pctLabel='slightly cheap to average';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread is in the lower half. Modest historical bias toward steepening.`;}
-  else if(pct>=10){pctLabel='narrow';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread is in the bottom quartile, suggesting a steepening bias based on history.`;}
-  else{pctLabel='extremely narrow';pctSignal='steep';pctView=`At the <b>${pct}th percentile</b>, the spread has been this tight or tighter only ${pct.toFixed(1)}% of the time — a strong historical steepening signal.`;}
+  if (!mat || !mato) return;
 
-  const absSig=Math.abs(sig);
-  let sigText;
-  if(absSig>=2.0)     sigText=`The spread is <b>${sig>0?'+':''}${sig}σ</b> from its mean — an extreme deviation. Reversion moves of this magnitude historically unwind sharply.`;
-  else if(absSig>=1.5)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is significantly stretched. Reversion pressure is elevated.`;
-  else if(absSig>=1.0)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is notably off average. Mean reversion is the base case.`;
-  else if(absSig>=0.5)sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is modestly off average. Directional bias exists but is not compelling on its own.`;
-  else                sigText=`At <b>${sig>0?'+':''}${sig}σ</b>, the spread is close to its mean. No significant sigma-based signal.`;
+  /* ── Step 1: resolve yield for anchor leg ── */
+  let yld = parseFloat((gel(`cy_${anchor}`) || {}).value);
 
-  const abOff=Math.abs(offAvg), offDir=offAvg>0?'above':'below';
-  const offPct=Math.abs(mean)>0.01?(abOff/Math.abs(mean)*100).toFixed(1):'—';
-  const offText=`The spread is <b>${abOff} bp ${offDir} its mean</b> (${offPct}% of mean).`;
+  if (field === 'price') {
+    const px = parseFloat((gel(`cp_${anchor}`) || {}).value);
+    if (!isNaN(px) && px > 0) {
+      yld = yieldFromCleanPrice(b.coupon, px, mat, settle);
+      setVal(`cy_${anchor}`, yld.toFixed(4));
+    }
+  } else if (field === 'dv01Ron' || field === 'dv01Usd') {
+    // Back-calculate notional from the entered DV01
+    if (!isNaN(yld)) {
+      const dv01pk = calcDV01(b.coupon, yld, mat, settle, 1);
+      if (dv01pk > 0) {
+        let dv01Ron;
+        if (field === 'dv01Ron') {
+          dv01Ron = parseNum((gel(`cd_${anchor}`) || {}).value);
+        } else {
+          const dv01Usd = parseNum((gel(`cu_${anchor}`) || {}).value);
+          dv01Ron = isNaN(dv01Usd) ? NaN : dv01Usd * fx;
+        }
+        if (!isNaN(dv01Ron) && dv01Ron > 0) {
+          const notional = dv01Ron / dv01pk;
+          setVal(`cn_${anchor}`, fmtNot(notional));
+        }
+      }
+    }
+  } else if (field === 'settle') {
+    // Settlement changed — yields unchanged, everything else recomputed below
+  }
 
-  let skewText;
-  if(skew==='negative') skewText=`The distribution is <b>negatively skewed</b> (median ${median} bp &gt; mean ${mean} bp): most observations cluster above the mean, with a downside tail.`;
-  else if(skew==='positive') skewText=`The distribution is <b>positively skewed</b> (mean ${mean} bp &gt; median ${median} bp): a tail of higher readings pulls the average up.`;
-  else skewText=`The distribution is approximately <b>symmetric</b> — mean and median are virtually equal (${mean} bp).`;
+  /* ── Step 2: update all derived fields for anchor leg ── */
+  yld = parseFloat((gel(`cy_${anchor}`) || {}).value);
+  if (isNaN(yld)) {
+    ['cp','cd','cu'].forEach(f => setVal(`${f}_${anchor}`, ''));
+    ['cp','cd','cu','cn'].forEach(f => setVal(`${f}_${other}`, ''));
+    updateFooter();
+    return;
+  }
 
-  const ord=n=>{const s=Math.abs(n)%100;if(s>=11&&s<=13)return 'th';switch(s%10){case 1:return 'st';case 2:return 'nd';case 3:return 'rd';default:return 'th';}};
-  const rangePct=range>0?+((last-low)/range*100).toFixed(0):50;
-  const rangeText=`Within the period range of <b>${low} to ${high} bp</b> (width: ${range} bp), the spread is at the ${rangePct}${ord(rangePct)} percentile of that range.`;
+  // Price (skip if user just typed a price)
+  if (field !== 'price') {
+    const px = cleanPrice(b.coupon, yld, mat, settle);
+    setVal(`cp_${anchor}`, px.toFixed(4));
+  }
 
-  const targetMean=mean.toFixed(2), targetMed=median.toFixed(2);
-  let curveText;
-  if(pctSignal==='flat') curveText=`Mean reversion implies <span class="signal-flat">FLATTENING</span>. Near-term target: <b>${targetMed} bp</b> (median), fuller reversion to <b>${targetMean} bp</b> (mean).`;
-  else if(pctSignal==='steep') curveText=`Mean reversion implies <span class="signal-steep">STEEPENING</span>. Near-term target: <b>${targetMed} bp</b> (median), fuller reversion to <b>${targetMean} bp</b> (mean).`;
-  else curveText=`No strong directional bias from mean reversion. The spread is near its historical centre.`;
+  const dv01pk = calcDV01(b.coupon, yld, mat, settle, 1);
+  const notional = parseNum((gel(`cn_${anchor}`) || {}).value);
+  const cnEl = gel(`cn_${anchor}`);
+  if (!isNaN(notional) && notional > 0 && document.activeElement !== cnEl) setVal(`cn_${anchor}`, fmtNot(notional));
+  let anchorDv01Ron = 0;
 
-  el.style.display='block';
-  el.innerHTML=`<div class="interp-title">Spread Interpretation</div><p>${pctView} ${offText} ${sigText}</p><p>${skewText}</p><p>${rangeText}</p><p>${curveText}</p>`;
+  if (!isNaN(notional) && notional > 0) {
+    anchorDv01Ron = dv01pk * notional;
+    const anchorDv01Usd = anchorDv01Ron / fx;
+    if (field !== 'dv01Ron') setVal(`cd_${anchor}`, fmtNum(anchorDv01Ron));
+    if (field !== 'dv01Usd') setVal(`cu_${anchor}`, fmtNum(anchorDv01Usd));
+    // If user typed dv01Ron, sync dv01Usd and vice-versa
+    if (field === 'dv01Ron') {
+      const dv01Ron = parseNum((gel(`cd_${anchor}`) || {}).value);
+      if (!isNaN(dv01Ron)) setVal(`cu_${anchor}`, fmtNum(dv01Ron / fx));
+      anchorDv01Ron = dv01Ron || anchorDv01Ron;
+    }
+    if (field === 'dv01Usd') {
+      const dv01Usd = parseNum((gel(`cu_${anchor}`) || {}).value);
+      if (!isNaN(dv01Usd)) {
+        anchorDv01Ron = dv01Usd * fx;
+        setVal(`cd_${anchor}`, fmtNum(anchorDv01Ron));
+      }
+    }
+  } else {
+    setVal(`cd_${anchor}`, '');
+    setVal(`cu_${anchor}`, '');
+  }
+
+  /* ── Step 3: cross-match other leg notional to anchor DV01 ── */
+  const yldo = parseFloat((gel(`cy_${other}`) || {}).value);
+  if (!isNaN(yldo) && anchorDv01Ron > 0) {
+    const pxo   = cleanPrice(bo.coupon, yldo, mato, settleo);
+    setVal(`cp_${other}`, pxo.toFixed(4));
+
+    const dv01pko = calcDV01(bo.coupon, yldo, mato, settleo, 1);
+    if (dv01pko > 0) {
+      const matchedNoto = anchorDv01Ron / dv01pko;
+      setVal(`cn_${other}`, fmtNot(matchedNoto));
+      const dv01Rono = dv01pko * matchedNoto;
+      setVal(`cd_${other}`, fmtNum(dv01Rono));
+      setVal(`cu_${other}`, fmtNum(dv01Rono / fxo));
+    }
+  }
+
+  updateFooter();
+}
+
+function updateFooter() {
+  const y0 = parseFloat((gel('cy_0') || {}).value);
+  const y1 = parseFloat((gel('cy_1') || {}).value);
+  const d0 = parseNum((gel('cd_0') || {}).value);
+  const d1 = parseNum((gel('cd_1') || {}).value);
+
+  const spreadLbl = gel('spreadBpLabel');
+  if (spreadLbl)
+    spreadLbl.textContent = (!isNaN(y0) && !isNaN(y1))
+      ? `Yield spread: ${((y1 - y0) * 100).toFixed(1)} bp` : '';
+
+  const matchLbl = gel('dv01MatchLabel');
+  if (matchLbl)
+    matchLbl.textContent = (d0 > 0 && d1 > 0)
+      ? `DV01 ratio: ${(d0 / d1).toFixed(3)}` : '';
 }
 </script>
 </body>
