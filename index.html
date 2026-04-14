@@ -17,7 +17,7 @@
   #lineChart { flex:1 1 0; min-width:0; height:420px; }
   #histChart  { flex:0 0 25%; min-width:180px; height:420px; }
 
-  .stats-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .stats-grid { display:grid; grid-template-columns:repeat(9, 1fr); gap:8px; margin-top:14px; }
   .stat-card { background:#1a2a3a; border:1px solid #2e3f50; border-radius:6px; padding:9px 14px; min-width:100px; }
   .stat-label { font-size:0.72em; color:#8395a7; margin-bottom:3px; }
   .stat-value { font-size:1.02em; font-weight:700; }
@@ -252,6 +252,7 @@ function defaultSettlement() {
    PAGE BOOT
    ═══════════════════════════════════════════════════════════════════════════ */
 let _bonds = [];
+let _histReacting = false; // guard: prevents relayout cascade when we update histChart
 
 const params = new URLSearchParams(location.search);
 const slug   = params.get('s');
@@ -467,10 +468,24 @@ function renderLineChart(data, spreadBp, maxVal, minVal, maxIdx, minIdx, yRange,
 
   // Sync histogram Y-axis on line chart zoom
   lineEl.on('plotly_relayout', ev => {
-    const u = {};
-    if (ev['yaxis.range[0]'] !== undefined) u['yaxis.range[0]'] = ev['yaxis.range[0]'];
-    if (ev['yaxis.range[1]'] !== undefined) u['yaxis.range[1]'] = ev['yaxis.range[1]'];
-    if (Object.keys(u).length) Plotly.relayout(document.getElementById('histChart'), u);
+    if (_histReacting) return; // ignore cascade from our own Plotly.react(histChart)
+    const x0 = ev['xaxis.range[0]'], x1 = ev['xaxis.range[1]'];
+    if (x0 !== undefined && x1 !== undefined) {
+      // Zoom: recompute stats/histogram for the visible window
+      const from = String(x0).slice(0, 10);
+      const to   = String(x1).slice(0, 10);
+      if (_allData) _recomputeWindow(from, to);
+    } else {
+      // y-only: sync histogram y-axis
+      const u = {};
+      if (ev['yaxis.range[0]'] !== undefined) u['yaxis.range[0]'] = ev['yaxis.range[0]'];
+      if (ev['yaxis.range[1]'] !== undefined) u['yaxis.range[1]'] = ev['yaxis.range[1]'];
+      if (Object.keys(u).length) Plotly.relayout(document.getElementById('histChart'), u);
+    }
+  });
+
+  lineEl.on('plotly_doubleclick', () => {
+    if (_allData) _recomputeWindow(_allData.dates[0], _allData.dates[_allData.dates.length - 1]);
   });
 
   // Hover tooltip (shared)
@@ -523,7 +538,8 @@ function renderHistChart(data, spreadBp, yRange) {
   );
 
   const histEl = document.getElementById('histChart');
-  Plotly.newPlot(histEl, [
+  _histReacting = true;
+  Plotly.react(histEl, [
     { x:counts, y:centers, type:'bar', orientation:'h', marker:{color:colors,line:{color:borders,width:0.8}}, showlegend:false, hoverinfo:'none' },
     { x:curveX, y:curveY,  type:'scatter', mode:'lines', line:{color:'#f39c12',width:1.5}, showlegend:false, hoverinfo:'skip' },
   ], {
@@ -533,6 +549,7 @@ function renderHistChart(data, spreadBp, yRange) {
     yaxis:{ range:yRange, gridcolor:'rgba(46,63,80,0.5)', linecolor:'#2e3f50', tickfont:{size:9,color:'#8395a7'}, zeroline:false, side:'right' },
     shapes:hShapes, bargap:0.04, hovermode:'closest',
   }, { responsive:true, displayModeBar:false });
+  _histReacting = false;
 
   const tt = document.getElementById('chartTooltip');
   histEl.on('plotly_hover', ev => {
@@ -542,6 +559,27 @@ function renderHistChart(data, spreadBp, yRange) {
     tt.style.display = 'block';
   });
   histEl.on('plotly_unhover', () => { tt.style.display = 'none'; });
+}
+
+/* ─── Recompute window (called on zoom/reset) ────────────────────── */
+function _recomputeWindow(from, to) {
+  if (!_allData) return;
+  const idxFrom = _allData.dates.findIndex(d => d >= from);
+  const idxTo   = _allData.dates.reduce((acc, d, i) => d <= to ? i : acc, -1);
+  if (idxFrom < 0 || idxTo < 0 || idxFrom > idxTo) return;
+
+  const dates    = _allData.dates.slice(idxFrom, idxTo + 1);
+  const spreadBp = _allData.spread.slice(idxFrom, idxTo + 1).map(s => +(s * 100).toFixed(2));
+  if (spreadBp.length < 2) return;
+
+  const yMin = Math.min(...spreadBp), yMax = Math.max(...spreadBp);
+  const yPad = (yMax - yMin) * 0.08 || 2;
+  const yRange = [yMin - yPad, yMax + yPad];
+
+  renderHistChart({ ..._allData, dates }, spreadBp, yRange);
+  const stats = recomputeStats(dates, spreadBp);
+  renderStats(stats);
+  renderInterpretation(stats);
 }
 
 /* ─── Stats grid ─────────────────────────────────────────────────── */
