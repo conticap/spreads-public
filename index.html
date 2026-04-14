@@ -86,6 +86,7 @@
   <label>From</label><input class="pdate" type="date" id="pfrom" />
   <label>To</label><input class="pdate" type="date" id="pto" />
   <span id="pgoBtnWrap"><button onclick="applyCustomRange()">Go</button></span>
+  <button id="resetZoomBtn" onclick="_resetZoom()" style="display:none;padding:4px 12px;font-size:0.82em;background:#1a2733;border:1px solid #54a0ff;color:#54a0ff;border-radius:4px;cursor:pointer;font-weight:600;">&#8634; Reset View</button>
 </div>
 <div id="charts"><div id="lineChart"></div><div id="histChart"></div></div>
 <div class="stats-grid" id="statsGrid"></div>
@@ -474,7 +475,7 @@ function renderLineChart(data, spreadBp, maxVal, minVal, maxIdx, minIdx, yRange,
       // Zoom: recompute stats/histogram for the visible window
       const from = String(x0).slice(0, 10);
       const to   = String(x1).slice(0, 10);
-      if (_allData) _recomputeWindow(from, to);
+      if (_allData) { _recomputeWindow(from, to); document.getElementById('resetZoomBtn').style.display = ''; }
     } else {
       // y-only: sync histogram y-axis
       const u = {};
@@ -485,7 +486,7 @@ function renderLineChart(data, spreadBp, maxVal, minVal, maxIdx, minIdx, yRange,
   });
 
   lineEl.on('plotly_doubleclick', () => {
-    if (_allData) _recomputeWindow(_allData.dates[0], _allData.dates[_allData.dates.length - 1]);
+    if (_allData) { _resetZoom(); }
   });
 
   // Hover tooltip (shared)
@@ -562,6 +563,12 @@ function renderHistChart(data, spreadBp, yRange) {
 }
 
 /* ─── Recompute window (called on zoom/reset) ────────────────────── */
+function _resetZoom() {
+  if (!_allData) return;
+  document.getElementById('resetZoomBtn').style.display = 'none';
+  Plotly.relayout(document.getElementById('lineChart'), { 'xaxis.autorange': true, 'yaxis.autorange': true });
+  _recomputeWindow(_allData.dates[0], _allData.dates[_allData.dates.length - 1]);
+}
 function _recomputeWindow(from, to) {
   if (!_allData) return;
   const idxFrom = _allData.dates.findIndex(d => d >= from);
